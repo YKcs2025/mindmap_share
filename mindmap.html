@@ -1,0 +1,2018 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17171a" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="マインドマップ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>マインドマップ</title>
+<script>/* URLで開いたときだけアプリ化（ホーム画面追加・オフライン）を有効にする */
+if (/^https?:$/.test(location.protocol)) { const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.webmanifest'; document.head.append(l); }</script>
+<style>
+:root{
+  --bg:#f6f5f2; --surf:#ffffff; --surf2:#efeee9; --text:#1e1e1c; --muted:#6c6b66; --line:#d8d6ce;
+  --accent:#2f6fde; --accent-ink:#fff; --danger:#d23b3b; --edge:#9b988f; --xlink:#c2410c;
+  --grid:rgba(0,0,0,.06); --shadow:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(0,0,0,.08);
+  --r:12px; --font:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#17171a; --surf:#232327; --surf2:#2d2d32; --text:#ececea; --muted:#9c9b97; --line:#3b3b41;
+  --accent:#6ea0ff; --accent-ink:#0b1630; --danger:#ff6b6b; --edge:#6e6d73; --xlink:#fb923c;
+  --grid:rgba(255,255,255,.06); --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);
+}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-text-size-adjust:100%}
+body{overflow:hidden;overscroll-behavior:none}
+button{font:inherit;color:inherit;touch-action:manipulation}
+.hidden{display:none!important}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surf);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:40px;white-space:nowrap}
+.btn:hover{background:var(--surf2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--danger)}
+.btn.icon{padding:8px;min-width:40px;justify-content:center}
+.btn:disabled{opacity:.4;cursor:default}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column}
+
+/* ---------- home ---------- */
+#home{overflow:auto}
+.home-in{max-width:960px;width:100%;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
+.home-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
+.home-head h1{font-size:22px;margin:0 auto 0 0;letter-spacing:.02em}
+.store{display:flex;align-items:flex-start;gap:8px 10px;flex-wrap:wrap;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-bottom:16px;font-size:14px}
+.store b{font-weight:600}
+.store .stxt{flex:1 1 220px;min-width:0;line-height:1.5}
+.store .sbtns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.store .dot{width:8px;height:8px;border-radius:50%;background:#16a34a;flex:none;margin-top:7px}
+@media (max-width:480px){.home-head h1{font-size:19px}#hImport span,#hNew .lg{display:none}.home-head{gap:8px}#hImport{padding:8px;min-width:40px;justify-content:center}}
+.store.warn .dot{background:#d97706}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;min-height:110px;transition:transform .08s}
+.card:hover{border-color:var(--accent)}
+.card:active{transform:scale(.99)}
+.card h3{margin:0;font-size:16px;line-height:1.35;word-break:break-word}
+.card .meta{font-size:12px;color:var(--muted)}
+.card .dirn{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.card .acts{margin-top:auto;display:flex;gap:4px;justify-content:flex-end}
+.card .acts button{border:0;background:none;padding:6px;border-radius:8px;cursor:pointer;color:var(--muted)}
+.card .acts button:hover{background:var(--surf2);color:var(--text)}
+.empty{text-align:center;color:var(--muted);padding:48px 16px;border:1px dashed var(--line);border-radius:var(--r)}
+.tip{font-size:13px;color:var(--muted);margin-top:18px;line-height:1.7}
+
+/* ---------- editor ---------- */
+#editor{background:var(--bg)}
+.top{position:absolute;left:0;right:0;top:0;z-index:20;display:flex;align-items:center;gap:6px;padding:max(8px,env(safe-area-inset-top)) 10px 8px;pointer-events:none}
+.top>*{pointer-events:auto}
+.top .ttl{min-width:0;max-width:40vw;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;padding:10px 12px}
+.top .gap{flex:1}
+.status{padding:4px 8px;border-radius:8px;background:color-mix(in srgb,var(--bg) 80%,transparent)}
+.status{font-size:12px;color:var(--muted);white-space:nowrap;pointer-events:none}
+.status.err{color:var(--danger)}
+.glass{background:color-mix(in srgb,var(--surf) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+#vp{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:default;
+  background-image:radial-gradient(var(--grid) 1.2px,transparent 1.3px);background-size:24px 24px}
+#vp.panning{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#edges{position:absolute;left:-50000px;top:-50000px;width:100000px;height:100000px;overflow:visible;pointer-events:none}
+#edges .e{fill:none;stroke:var(--edge);stroke-width:2}
+#edges .x{fill:none;stroke:var(--xlink);stroke-width:2;stroke-dasharray:6 5}
+#edges .xhit{fill:none;stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:pointer}
+#edges .x.sel{stroke-width:3.5;stroke-dasharray:none}
+#edges text{font-size:12px;fill:var(--xlink);paint-order:stroke;stroke:var(--bg);stroke-width:4px;font-family:var(--font)}
+.node{position:absolute;transform:translate(-50%,-50%);--nb:var(--line);--nf:var(--surf);
+  background:var(--nf);border:1.5px solid var(--nb);border-radius:12px;padding:8px 12px;width:max-content;max-width:300px;min-width:40px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);user-select:none;-webkit-user-select:none;cursor:grab;display:flex;flex-direction:column;align-items:center;gap:6px}
+.node .txt{font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word;text-align:center;outline:none;min-width:1em}
+.node .txt:empty::before{content:"（空）";color:var(--muted)}
+.node.imgonly .txt{display:none}
+.node.imgonly{padding:4px}
+.node img{display:block;border-radius:8px;pointer-events:none;object-fit:cover;background:var(--surf2)}
+.node.root{padding:12px 18px;border-width:2px;font-weight:700}
+.node.root .txt{font-size:18px}
+.node.float{border-style:dashed}
+.node.sel{outline:2.5px solid var(--accent);outline-offset:2px}
+.node.target{outline:2.5px dashed var(--xlink);outline-offset:3px}
+.node.editing{cursor:text}
+.node.editing .txt{user-select:text;-webkit-user-select:text;min-width:3em}
+.node .nmark{position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;background:var(--surf);border:1.5px solid var(--nb);display:flex;align-items:center;justify-content:center}
+.node .nmark svg{width:10px;height:10px;stroke-width:2.4}
+.node .fold{position:absolute;top:50%;transform:translateY(-50%);right:-13px;min-width:22px;height:22px;border-radius:11px;border:1.5px solid var(--nb);background:var(--surf);font-size:11px;line-height:1;padding:0 5px;cursor:pointer;color:var(--muted)}
+.node .fold.l{right:auto;left:-13px}
+.node .rsz{position:absolute;right:-9px;bottom:-9px;width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid var(--surf);cursor:nwse-resize}
+.c-red{--nb:#e05252}.c-orange{--nb:#e8873a}.c-yellow{--nb:#d4a514}.c-green{--nb:#3e9e5c}.c-teal{--nb:#1f9c9c}
+.c-blue{--nb:#3b78e0}.c-purple{--nb:#8a5cd6}.c-pink{--nb:#d6559a}.c-gray{--nb:#8a8a8a}
+.node[class*=" c-"]{--nf:color-mix(in srgb,var(--nb) 13%,var(--surf))}
+
+.bar{position:absolute;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));z-index:20;display:flex;gap:2px;padding:5px;max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:none}
+.bar::-webkit-scrollbar{display:none}
+.bar button{border:0;background:none;border-radius:9px;padding:6px 6px;min-width:46px;white-space:nowrap;flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--text);cursor:pointer}
+.bar button:hover{background:var(--surf2)}
+.bar button.danger{color:var(--danger)}
+.bar button:disabled{opacity:.35}
+.zoom{position:absolute;right:10px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 70px);z-index:19;display:flex;flex-direction:column;padding:3px}
+.zoom button{border:0;background:none;width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.zoom button:hover{background:var(--surf2)}
+.zoom span{font-size:10px;text-align:center;color:var(--muted);padding:2px 0}
+#mode{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(8px,env(safe-area-inset-top)) + 54px);z-index:21;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;font-size:13px;border-color:var(--xlink)}
+
+/* sheet / side panel */
+#sheet{position:absolute;z-index:25;display:flex;flex-direction:column;gap:12px;padding:14px;overflow:auto;
+  left:0;right:0;bottom:0;max-height:62dvh;border-radius:16px 16px 0 0;border-bottom:0;padding-bottom:max(14px,env(safe-area-inset-bottom))}
+@media (max-width:480px){.status.ok{display:none}.bar button{min-width:43px;padding:6px 4px;font-size:10px}}
+@media (min-width:820px){#sheet{left:auto;right:12px;top:64px;bottom:auto;width:340px;max-height:calc(100dvh - 160px);border-radius:14px;border-bottom:1px solid var(--line)}}
+#sheet .hd{display:flex;align-items:center;gap:8px}
+#sheet .hd b{flex:1}
+#sheet label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+#sheet textarea,.dlg textarea,.dlg input{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:9px 10px;font:inherit;font-size:16px;resize:vertical}
+#sheet textarea:focus,.dlg textarea:focus,.dlg input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.sw{display:flex;flex-wrap:wrap;gap:7px}
+.sw button{width:30px;height:30px;border-radius:50%;border:2px solid var(--surf);outline:1.5px solid var(--line);cursor:pointer;padding:0}
+.sw button.on{outline:2.5px solid var(--text)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.imgprev{max-width:100%;max-height:140px;border-radius:8px;display:block}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* menu, dialog, toast */
+.menu{position:fixed;z-index:60;min-width:240px;padding:6px;display:flex;flex-direction:column;max-height:80dvh;overflow:auto}
+.menu button{display:flex;align-items:center;gap:10px;border:0;background:none;padding:10px 12px;border-radius:8px;text-align:left;cursor:pointer;font-size:14px}
+.menu button:hover{background:var(--surf2)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.menu .chk{margin-left:auto;color:var(--accent);font-weight:700}
+.scrim{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px}
+.dlg{background:var(--surf);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:520px;max-height:90dvh;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0;font-size:17px}
+.dlg .body{font-size:14px;line-height:1.65;color:var(--text)}
+.dlg .body p{margin:0 0 8px}
+.dlg .body small{color:var(--muted)}
+.dlg .btns{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.dlg .opt{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;background:none;text-align:left;width:100%}
+.dlg .opt:hover{border-color:var(--accent)}
+.dlg .opt:disabled{opacity:.45;cursor:default;border-color:var(--line)}
+.dlg .opt b{display:block;margin-bottom:2px}
+.dlg .opt span{font-size:12.5px;color:var(--muted);line-height:1.55}
+.dlg code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--surf2);padding:1px 5px;border-radius:5px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(max(12px,env(safe-area-inset-bottom)) + 76px);z-index:80;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#toast div{background:var(--text);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:13px;max-width:86vw;box-shadow:var(--shadow)}
+#drop{position:fixed;inset:10px;border:3px dashed var(--accent);border-radius:20px;z-index:90;pointer-events:none;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+</style>
+</head>
+<body>
+
+<!-- ===== 一覧 ===== -->
+<section id="home" class="screen">
+  <div class="home-in">
+    <div class="home-head">
+      <h1>マインドマップ</h1>
+      <button class="btn" id="hImport"></button>
+      <button class="btn icon" id="hMore" title="その他"></button>
+      <button class="btn primary" id="hNew"></button>
+    </div>
+    <div class="store" id="storeBox"></div>
+    <div class="grid" id="mapGrid"></div>
+    <div class="tip" id="homeTip"></div>
+  </div>
+</section>
+
+<!-- ===== 編集 ===== -->
+<section id="editor" class="screen hidden">
+  <div id="vp"><div id="world"><svg id="edges" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--xlink)"/></marker>
+  </defs><g id="eg" transform="translate(50000 50000)"></g></svg></div></div>
+  <div class="top">
+    <button class="btn icon glass" id="eBack" title="一覧へ"></button>
+    <div class="ttl glass" id="eTitle"></div>
+    <div class="gap"></div>
+    <span class="status" id="eStatus"></span>
+    <button class="btn icon glass" id="eUndo" title="元に戻す (Ctrl+Z)"></button>
+    <button class="btn icon glass" id="eRedo" title="やり直す (Ctrl+Shift+Z)"></button>
+    <button class="btn icon glass" id="eAI" title="AI用にMarkdownをコピー"></button>
+    <button class="btn icon glass" id="eShare" title="共有"></button>
+    <button class="btn icon glass" id="eMore" title="メニュー"></button>
+  </div>
+  <div id="mode" class="glass hidden"><span id="modeTxt"></span><button class="btn" id="modeCancel">やめる</button></div>
+  <div class="zoom glass">
+    <button id="zIn" title="拡大"></button><span id="zLbl">100%</span><button id="zOut" title="縮小"></button><button id="zFit" title="全体を表示"></button>
+  </div>
+  <div class="bar glass" id="bar"></div>
+  <div id="sheet" class="glass hidden"></div>
+</section>
+
+<div id="toast"></div>
+<div id="drop" class="hidden"></div>
+<input type="file" id="fImg" accept="image/*" class="hidden">
+<input type="file" id="fImport" accept=".zip,.json,.md,.markdown,.txt,application/zip,application/json,text/markdown,text/plain" multiple class="hidden">
+
+<script>
+'use strict';
+const __PRISTINE = document.documentElement.cloneNode(true);
+/* =========================================================
+   マインドマップ  — 1ファイル完結エディタ
+   保存形式:  maps/<フォルダ>/map.json  (正: レイアウト含む全データ)
+             maps/<フォルダ>/map.md    (AI向け: 階層Markdown, 自動生成)
+             maps/<フォルダ>/images/   (画像)
+             maps/index.md, maps/README.md
+   ========================================================= */
+const FORMAT = 'mindmap/1';
+
+/* ---------------- 小物 ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const ICONS = {
+  plus:'M12 5v14M5 12h14', child:'M4 6h7M7.5 6v8a4 4 0 0 0 4 4H20M17 15l3 3-3 3', sib:'M4 6h12M4 12h12M4 18h7M17 15v6M14 18h6',
+  edit:'M4 20h4L19 9l-4-4L4 16v4z', image:'M4 5h16v14H4zM9 10.5a1.5 1.5 0 1 0-.01 0M20 15l-5-5-8 9', trash:'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13',
+  link:'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1',
+  move:'M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20', undo:'M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3',
+  redo:'M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3', back:'M15 18l-6-6 6-6', more:'M5 12h.01M12 12h.01M19 12h.01',
+  fit:'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5', layout:'M3 12h4M7 5v14M7 5h4M7 19h4M11 5h3M11 19h3M17 3h4v4h-4zM17 17h4v4h-4z',
+  copy:'M9 9h11v11H9zM5 15H4V4h11v1', ai:'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z',
+  down:'M12 4v12M7 11l5 5 5-5M5 20h14', up:'M12 20V8M7 13l5-5 5 5M5 4h14', folder:'M3 6h6l2 2h10v11H3z',
+  note:'M6 3h9l4 4v14H6zM9 12h7M9 16h7', close:'M6 6l12 12M18 6L6 18', zin:'M12 5v14M5 12h14', zout:'M5 12h14',
+  rename:'M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4', dup:'M8 8h12v12H8zM4 16V4h12', share:'M12 3v12M8 7l4-4 4 4M5 13v7h14v-7',
+  tag:'M3 12V4h8l10 10-8 8z M7.5 8a.5.5 0 1 0 0-.01', paste:'M9 4h6v3H9zM7 5H5v16h14V5h-2',
+};
+const icon = (n, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24"><path d="${ICONS[n]}"/></svg>`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function rid(n = 5){ const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, b => '0123456789abcdefghijklmnopqrstuvwxyz'[b % 36]).join(''); }
+function pad(n){ return String(n).padStart(2, '0'); }
+function nowIso(){
+  const d = new Date(), o = -d.getTimezoneOffset(), s = o >= 0 ? '+' : '-', a = Math.abs(o);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${s}${pad(Math.floor(a/60))}:${pad(a%60)}`;
+}
+function fmtDate(iso){ if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return iso; return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function safeDirName(title){
+  let s = String(title || '').replace(/[\/\\:*?"<>|\x00-\x1f]/g, '_').replace(/\s+/g, ' ').trim().replace(/^[._\s]+/, '').slice(0, 40).trim();
+  return s || 'map';
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const LS = {
+  get(k, d){ try { const v = localStorage.getItem('mm.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v){ try { localStorage.setItem('mm.' + k, JSON.stringify(v)); } catch {} },
+};
+const COLORS = [['', '標準'], ['red','赤'], ['orange','橙'], ['yellow','黄'], ['green','緑'], ['teal','青緑'], ['blue','青'], ['purple','紫'], ['pink','桃'], ['gray','灰']];
+const COLOR_HEX = {red:'#e05252',orange:'#e8873a',yellow:'#d4a514',green:'#3e9e5c',teal:'#1f9c9c',blue:'#3b78e0',purple:'#8a5cd6',pink:'#d6559a',gray:'#8a8a8a'};
+const UA = navigator.userAgent;
+const IS_IOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/.test(UA);
+const IS_MOBILE = IS_IOS || IS_ANDROID;
+const IS_STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const CAN_FOLDER = !!window.showDirectoryPicker;
+const PLAIN_OK = (() => { const d = document.createElement('div'); try { d.contentEditable = 'plaintext-only'; return d.contentEditable === 'plaintext-only'; } catch { return false; } })();
+
+/* ---------------- トースト / ダイアログ / メニュー ---------------- */
+function toast(msg, ms = 2400){ const d = document.createElement('div'); d.textContent = msg; $('#toast').append(d); setTimeout(() => d.remove(), ms); }
+function dialog({ title = '', html = '', input = null, buttons = [{ label: 'OK', value: true, primary: true }], onBuild } = {}){
+  return new Promise(resolve => {
+    const sc = document.createElement('div'); sc.className = 'scrim';
+    const inp = input ? (input.multiline
+      ? `<textarea rows="${input.rows || 10}" placeholder="${esc(input.placeholder || '')}">${esc(input.value || '')}</textarea>`
+      : `<input type="text" value="${esc(input.value || '')}" placeholder="${esc(input.placeholder || '')}">`) : '';
+    sc.innerHTML = `<div class="dlg" role="dialog">${title ? `<h2>${esc(title)}</h2>` : ''}<div class="body">${html}</div>${inp}<div class="btns"></div></div>`;
+    const field = sc.querySelector('textarea,input');
+    const done = v => { sc.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+    const onKey = e => {
+      if (e.key === 'Escape') { e.preventDefault(); done(null); }
+      if (e.key === 'Enter' && field && field.tagName === 'INPUT' && !e.isComposing) { e.preventDefault(); done(field.value); }
+    };
+    for (const b of buttons) {
+      const el = document.createElement('button'); el.className = 'btn' + (b.primary ? ' primary' : '') + (b.danger ? ' danger' : ''); el.textContent = b.label;
+      el.onclick = () => done(b.value === '$input' ? (field ? field.value : '') : b.value);
+      sc.querySelector('.btns').append(el);
+    }
+    sc.addEventListener('pointerdown', e => { if (e.target === sc) done(null); });
+    document.addEventListener('keydown', onKey, true);
+    document.body.append(sc);
+    if (onBuild) onBuild(sc.querySelector('.dlg'), done);
+    if (field) { field.focus(); if (field.select && input.select !== false) field.select(); }
+  });
+}
+const confirmDlg = (title, html, okLabel = 'OK', danger = false) => dialog({ title, html, buttons: [{ label: 'キャンセル', value: false }, { label: okLabel, value: true, primary: !danger, danger }] });
+const promptDlg = (title, value, html = '') => dialog({ title, html, input: { value }, buttons: [{ label: 'キャンセル', value: null }, { label: 'OK', value: '$input', primary: true }] });
+
+function openMenu(anchor, items){
+  closeMenu();
+  const m = document.createElement('div'); m.className = 'menu glass'; m.id = 'menu';
+  for (const it of items) {
+    if (it === '-') { m.append(document.createElement('hr')); continue; }
+    if (it.hidden) continue;
+    const b = document.createElement('button');
+    b.innerHTML = `${it.icon ? icon(it.icon) : ''}<span>${esc(it.label)}</span>${it.checked ? '<span class="chk">✓</span>' : ''}`;
+    if (it.disabled) b.disabled = true;
+    b.onclick = () => { closeMenu(); it.run(); };
+    m.append(b);
+  }
+  document.body.append(m);
+  const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+  m.style.left = clamp(r.right - mw, 8, innerWidth - mw - 8) + 'px';
+  m.style.top = (r.bottom + 6 + mh < innerHeight ? r.bottom + 6 : Math.max(8, r.top - mh - 6)) + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', menuOutside, true), 0);
+}
+function menuOutside(e){ if (!e.target.closest('#menu')) closeMenu(); }
+function closeMenu(){ $('#menu')?.remove(); document.removeEventListener('pointerdown', menuOutside, true); }
+
+async function copyText(text){
+  try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; } } catch {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.append(ta); ta.select(); ta.setSelectionRange(0, text.length); const ok = document.execCommand('copy'); ta.remove(); if (ok) return true;
+  } catch {}
+  await dialog({ title: 'コピーしてください', html: '<small>自動コピーできなかったので、全選択してコピーしてください。</small>', input: { value: text, multiline: true, rows: 14 }, buttons: [{ label: '閉じる', value: true, primary: true }] });
+  return false;
+}
+function download(name, blob){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function shareOrDownload(name, blob, preferShare){
+  try {
+    const f = new File([blob], name, { type: blob.type });
+    if ((IS_IOS || (preferShare && IS_MOBILE)) && navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return true; }
+  } catch (e) { if (e.name === 'AbortError') return false; }
+  download(name, blob); return true;
+}
+
+/* ---------------- IndexedDB ---------------- */
+let _db;
+function idb(){
+  if (_db) return _db;
+  _db = new Promise((res, rej) => {
+    const r = indexedDB.open('mindmap-local', 1);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('maps'); d.createObjectStore('images'); d.createObjectStore('kv'); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  return _db;
+}
+async function tx(store, mode, fn){
+  const d = await idb();
+  return new Promise((res, rej) => {
+    const t = d.transaction(store, mode); const s = t.objectStore(store); let out;
+    Promise.resolve(fn(s)).then(v => out = v);
+    t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  });
+}
+const req = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const kvGet = k => tx('kv', 'readonly', s => req(s.get(k)));
+const kvSet = (k, v) => tx('kv', 'readwrite', s => { s.put(v, k); });
+const kvDel = k => tx('kv', 'readwrite', s => { s.delete(k); });
+
+/* ---------------- 保存先（バックエンド） ---------------- */
+// 共通インターフェース: list() load(dir) readImage(dir,f) writeMap(dir,json,md) writeImage(dir,f,blob) deleteImage(dir,f) deleteMap(dir) rename(a,b) writeRoot(name,text)
+class BrowserBackend {
+  kind = 'browser'; label = 'このブラウザ内';
+  async list(){
+    const out = [];
+    await tx('maps', 'readonly', s => new Promise(r => { s.openCursor().onsuccess = e => { const c = e.target.result; if (!c) return r();
+      try { const m = JSON.parse(c.value.json); out.push({ dir: c.key, id: m.id, title: m.title, updated: m.updated, count: m.nodes.length }); } catch {} c.continue(); }; }));
+    return out;
+  }
+  async load(dir){ const v = await tx('maps', 'readonly', s => req(s.get(dir))); if (!v) throw new Error('マップがありません'); return JSON.parse(v.json); }
+  async readImage(dir, f){ return tx('images', 'readonly', s => req(s.get(dir + '/' + f))); }
+  async writeMap(dir, json, md){ await tx('maps', 'readwrite', s => { s.put({ json, md }, dir); }); }
+  async writeImage(dir, f, blob){ await tx('images', 'readwrite', s => { s.put(blob, dir + '/' + f); }); }
+  async deleteImage(dir, f){ await tx('images', 'readwrite', s => { s.delete(dir + '/' + f); }); }
+  async _imgKeys(dir){ return tx('images', 'readonly', s => req(s.getAllKeys(IDBKeyRange.bound(dir + '/', dir + '/￿')))); }
+  async deleteMap(dir){
+    const keys = await this._imgKeys(dir);
+    await tx('images', 'readwrite', s => { keys.forEach(k => s.delete(k)); });
+    await tx('maps', 'readwrite', s => { s.delete(dir); });
+  }
+  async rename(a, b){
+    const v = await tx('maps', 'readonly', s => req(s.get(a))); const keys = await this._imgKeys(a);
+    for (const k of keys) { const blob = await tx('images', 'readonly', s => req(s.get(k))); await tx('images', 'readwrite', s => { s.put(blob, b + k.slice(a.length)); s.delete(k); }); }
+    await tx('maps', 'readwrite', s => { s.put(v, b); s.delete(a); });
+  }
+  async writeRoot(){}
+}
+
+class FolderBackend {
+  kind = 'folder';
+  constructor(root, name){ this.root = root; this.label = `フォルダ「${name}」`; }
+  async _file(dh, name){ return (await dh.getFileHandle(name)).getFile(); }
+  async _write(dh, name, data){ const fh = await dh.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(data); await w.close(); }
+  async list(){
+    const out = [];
+    for await (const [name, h] of this.root.entries()) {
+      if (h.kind !== 'directory' || name.startsWith('.') || name.startsWith('_')) continue;
+      try { const m = JSON.parse(await (await this._file(h, 'map.json')).text()); out.push({ dir: name, id: m.id, title: m.title || name, updated: m.updated, count: (m.nodes || []).length }); } catch {}
+    }
+    return out;
+  }
+  async load(dir){ const dh = await this.root.getDirectoryHandle(dir); return JSON.parse(await (await this._file(dh, 'map.json')).text()); }
+  async readImage(dir, f){ try { const dh = await (await this.root.getDirectoryHandle(dir)).getDirectoryHandle('images'); return await this._file(dh, f); } catch { return null; } }
+  async writeMap(dir, json, md){ const dh = await this.root.getDirectoryHandle(dir, { create: true }); await this._write(dh, 'map.json', json); await this._write(dh, 'map.md', md); }
+  async writeImage(dir, f, blob){ const dh = await (await this.root.getDirectoryHandle(dir, { create: true })).getDirectoryHandle('images', { create: true }); await this._write(dh, f, blob); }
+  async deleteImage(dir, f){ try { const dh = await (await this.root.getDirectoryHandle(dir)).getDirectoryHandle('images'); await dh.removeEntry(f); } catch {} }
+  async _copy(src, dst){
+    for await (const [name, h] of src.entries()) {
+      if (h.kind === 'directory') await this._copy(h, await dst.getDirectoryHandle(name, { create: true }));
+      else await this._write(dst, name, await h.getFile());
+    }
+  }
+  async deleteMap(dir){
+    const src = await this.root.getDirectoryHandle(dir);
+    const trash = await this.root.getDirectoryHandle('_trash', { create: true });
+    const d = new Date(), stamp = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    await this._copy(src, await trash.getDirectoryHandle(dir + '_' + stamp, { create: true }));
+    await this.root.removeEntry(dir, { recursive: true });
+  }
+  async rename(a, b){
+    const src = await this.root.getDirectoryHandle(a);
+    await this._copy(src, await this.root.getDirectoryHandle(b, { create: true }));
+    await this.root.removeEntry(a, { recursive: true });
+  }
+  async writeRoot(name, text){ await this._write(this.root, name, text); }
+  async hasRoot(name){ try { await this.root.getFileHandle(name); return true; } catch { return false; } }
+}
+
+class ServerBackend {
+  kind = 'server'; label = 'PCの maps/ フォルダ（サーバー経由）';
+  constructor(key){ this.key = key || ''; }
+  async _f(path, opt = {}){
+    const r = await fetch('api/' + path, { ...opt, headers: { ...(opt.headers || {}), 'X-Mindmap-Key': this.key }, cache: 'no-store' });
+    if (!r.ok) { const e = new Error('サーバーエラー ' + r.status); e.status = r.status; throw e; }
+    return r;
+  }
+  static async probe(key){ try { const r = await fetch('api/ping', { headers: { 'X-Mindmap-Key': key || '' }, cache: 'no-store' }); if (r.status === 401) return 'auth'; if (!r.ok) return false; const j = await r.json(); return j.app === 'mindmap'; } catch { return false; } }
+  async list(){ return (await this._f('maps')).json(); }
+  async load(dir){ return (await this._f('map/' + encodeURIComponent(dir))).json(); }
+  async readImage(dir, f){ try { return await (await this._f(`img/${encodeURIComponent(dir)}/${encodeURIComponent(f)}`)).blob(); } catch { return null; } }
+  async writeMap(dir, json, md){ await this._f('map/' + encodeURIComponent(dir), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ json, md }) }); }
+  async writeImage(dir, f, blob){ await this._f(`img/${encodeURIComponent(dir)}/${encodeURIComponent(f)}`, { method: 'PUT', body: blob }); }
+  async deleteImage(dir, f){ await this._f(`img/${encodeURIComponent(dir)}/${encodeURIComponent(f)}`, { method: 'DELETE' }); }
+  async deleteMap(dir){ await this._f('map/' + encodeURIComponent(dir), { method: 'DELETE' }); }
+  async rename(a, b){ await this._f('rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from: a, to: b }) }); }
+  async writeRoot(name, text){ await this._f('file/' + encodeURIComponent(name), { method: 'PUT', body: text }); }
+  async hasRoot(name){ try { await this._f('file/' + encodeURIComponent(name)); return true; } catch { return false; } }
+}
+
+/* ---------------- ZIP（無圧縮で書き出し / 無圧縮・deflate を読み込み） ---------------- */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u){ let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function toU8(d){ if (d instanceof Uint8Array) return d; if (typeof d === 'string') return new TextEncoder().encode(d); return new Uint8Array(await d.arrayBuffer()); }
+async function makeZip(files){
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  const d = new Date(), dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)), dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate());
+  for (const f of files) {
+    const data = await toU8(f.data), nm = enc.encode(f.name), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dt, true); lh.setUint16(12, dd, true); lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+    lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    parts.push(lh.buffer, nm, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dt, true); ch.setUint16(14, dd, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+    ch.setUint16(28, nm.length, true); ch.setUint32(42, off, true);
+    cen.push(ch.buffer, nm);
+    off += 30 + nm.length + data.length;
+  }
+  const cenSize = cen.reduce((a, b) => a + b.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, cenSize, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, end.buffer], { type: 'application/zip' });
+}
+async function readZip(blob){
+  const b = new Uint8Array(await blob.arrayBuffer()), v = new DataView(b.buffer);
+  let e = b.length - 22; while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('ZIPファイルではありません');
+  const n = v.getUint16(e + 10, true); let p = v.getUint32(e + 16, true); const out = [];
+  const u8dec = new TextDecoder('utf-8', { fatal: true }); let sjis; try { sjis = new TextDecoder('shift_jis'); } catch {}
+  for (let i = 0; i < n; i++) {
+    if (v.getUint32(p, true) !== 0x02014b50) break;
+    const fl = v.getUint16(p + 8, true), meth = v.getUint16(p + 10, true), cs = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), lo = v.getUint32(p + 42, true);
+    const nb = b.subarray(p + 46, p + 46 + nl); let name;
+    try { name = u8dec.decode(nb); } catch { name = (fl & 0x800 || !sjis) ? new TextDecoder().decode(nb) : sjis.decode(nb); }
+    p += 46 + nl + xl + cl;
+    if (name.endsWith('/')) continue;
+    const ds = lo + 30 + v.getUint16(lo + 26, true) + v.getUint16(lo + 28, true);
+    let data = b.subarray(ds, ds + cs);
+    if (meth === 8) data = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    else if (meth !== 0) continue;
+    out.push({ name: name.replace(/\\/g, '/'), data });
+  }
+  return out;
+}
+
+/* ---------------- Markdown（AI向け）書き出し ---------------- */
+const MD_HELP = '<!-- AI向け書式: 箇条書きのインデント=階層 / "> "=メモ / ![..](images/..)=画像 / <!-- id:.. -->=ノードID（既存ノードを編集するときは残し、新しいノードには付けない） -->';
+function mdText(t){ return String(t || '').replace(/\r/g, '').replace(/\n/g, '<br>'); }
+function toMarkdown(m){
+  const T = mapTools(m), L = [];
+  const yq = s => JSON.stringify(String(s));
+  L.push('---', `format: mindmap-md/1`, `title: ${yq(m.title)}`, `id: ${m.id}`, `created: ${m.created}`, `updated: ${m.updated}`, `nodes: ${m.nodes.length}`, '---', '', MD_HELP, '');
+  const extras = (n, ind) => {
+    if (n.note) for (const ln of n.note.replace(/\r/g, '').split('\n')) L.push(`${ind}> ${ln}`.trimEnd());
+    if (n.image) L.push(`${ind}![${mdText(n.text).replace(/[\[\]]/g, '') || '画像'}](images/${n.image.file})`);
+  };
+  const walk = (id, depth) => {
+    for (const c of T.kids(id)) {
+      const n = T.N.get(c), ind = '  '.repeat(depth);
+      L.push(`${ind}- ${mdText(n.text) || (n.image ? '（画像）' : '（空）')} <!-- id:${n.id} -->`);
+      extras(n, ind + '  ');
+      walk(c, depth + 1);
+    }
+  };
+  const root = T.N.get(m.rootId);
+  L.push(`# ${mdText(root.text) || '（無題）'} <!-- id:${root.id} -->`); extras(root, ''); L.push('');
+  walk(root.id, 0);
+  const floats = T.kids(null).filter(id => id !== m.rootId);
+  if (floats.length) {
+    L.push('', '## 独立ノード', '');
+    for (const f of floats) { const n = T.N.get(f); L.push(`- ${mdText(n.text) || (n.image ? '（画像）' : '（空）')} <!-- id:${n.id} -->`); extras(n, '  '); walk(f, 1); }
+  }
+  if (m.links.length) {
+    L.push('', '## 関連', '');
+    for (const k of m.links) {
+      const a = T.N.get(k.from), b = T.N.get(k.to); if (!a || !b) continue;
+      L.push(`- ${mdText(a.text) || a.id} → ${mdText(b.text) || b.id}${k.label ? ': ' + mdText(k.label) : ''} <!-- link:${a.id}>${b.id} -->`);
+    }
+  }
+  return L.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
+}
+
+/* ---------------- Markdown 読み込み（AIが書いた/編集したもの） ---------------- */
+function parseMarkdown(src){
+  let text = String(src).replace(/\r\n?/g, '\n').replace(/^﻿/, '');
+  let title = null;
+  const fm = text.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (fm) { const t = fm[1].match(/^title:\s*(.+)$/m); if (t) { title = t[1].trim(); try { title = JSON.parse(title); } catch { title = title.replace(/^['"]|['"]$/g, ''); } } text = text.slice(fm[0].length); }
+  const nodes = [], links = [];
+  const mk = (raw, parent, floating) => {
+    let s = raw, id = null;
+    const im = s.match(/<!--\s*id:\s*([\w-]+)\s*-->/); if (im) { id = im[1]; s = s.replace(im[0], ''); }
+    s = s.replace(/<!--[\s\S]*?-->/g, '').replace(/<br\s*\/?>/gi, '\n').trim();
+    if (s === '（空）' || s === '（画像）') s = '';
+    const n = { id, text: s, note: '', image: null, parent, floating: !!floating, idx: nodes.length };
+    nodes.push(n); return n;
+  };
+  let root = null, section = 'main', last = null, stack = [], heads = [], base = null, inComment = false;
+  const isFloatH = s => /^(独立|未接続|フローティング|floating)/i.test(s);
+  const isLinkH = s => /^(関連|関係|リンク|links?|relations?)/i.test(s);
+  for (const line of text.split('\n')) {
+    if (inComment) { if (line.includes('-->')) inComment = false; continue; }
+    if (/^\s*<!--/.test(line) && !/-->/.test(line)) { inComment = true; continue; }
+    if (/^\s*<!--[\s\S]*-->\s*$/.test(line)) continue;
+    if (/^\s*$/.test(line)) continue;
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      const lv = h[1].length, body = h[2].trim(), plain = body.replace(/<!--[\s\S]*?-->/g, '').trim();
+      stack = [];
+      if (lv === 1 && !root) { root = mk(body, null); last = root; base = root; section = 'main'; heads = [root]; continue; }
+      if (lv === 2 && isFloatH(plain)) { section = 'float'; base = null; last = null; continue; }
+      if (lv === 2 && isLinkH(plain)) { section = 'links'; last = null; continue; }
+      if (section === 'links') continue;
+      if (!root) { root = mk(title || 'マインドマップ', null); heads = [root]; }
+      const hl = Math.max(1, lv - 1);
+      heads.length = Math.min(heads.length, hl);
+      const par = section === 'float' ? (heads[hl - 1] && heads[hl - 1] !== root ? heads[hl - 1] : null) : (heads[hl - 1] || root);
+      const n = mk(body, par, section === 'float' && !par); heads[hl] = n; base = n; last = n; continue;
+    }
+    const b = line.match(/^([ \t]*)(?:[-*+]|\d+[.)])\s+(.*)$/);
+    if (b) {
+      const ind = b[1].replace(/\t/g, '    ').length;
+      if (section === 'links') {
+        const raw = b[2]; const lm = raw.match(/<!--\s*link:\s*([\w-]+)\s*>\s*([\w-]+)\s*-->/);
+        const body = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
+        const am = body.match(/^(.*?)\s*(?:→|->|⇒|=>)\s*(.*?)(?:\s*[:：]\s*(.*))?$/);
+        if (lm || am) links.push({ from: lm?.[1], to: lm?.[2], fromText: am?.[1]?.trim(), toText: am?.[2]?.trim(), label: (am?.[3] || '').trim() });
+        continue;
+      }
+      if (!root && section === 'main') { root = mk(title || 'マインドマップ', null); base = root; heads = [root]; }
+      while (stack.length && stack[stack.length - 1].ind >= ind) stack.pop();
+      const par = stack.length ? stack[stack.length - 1].n : base;
+      const n = mk(b[2], par, !par);
+      stack.push({ ind, n }); last = n; continue;
+    }
+    if (section === 'links' || !last) continue;
+    const t = line.trim();
+    const img = t.match(/^!\[[^\]]*\]\(([^)]+)\)$/);
+    if (img) { last.image = decodeURIComponent(img[1].trim().replace(/^\.?\/?images\//, '')); continue; }
+    const q = line.match(/^\s*>\s?(.*)$/);
+    const nl = q ? q[1] : t;
+    last.note = last.note ? last.note + '\n' + nl : nl;
+  }
+  if (!root) root = mk(title || 'マインドマップ', null);
+  return { title: title || root.text, root, nodes, links };
+}
+
+/* ---------------- マップのデータ操作 ---------------- */
+// map.json: 人にもAIにも読みやすいよう、ノード・関連線は1行1件で書き出す
+function toJson(m){
+  const { nodes, links, ...head } = m, h = JSON.stringify(head, null, 2).slice(0, -2);
+  const nl = nodes.map(n => '    ' + JSON.stringify(n)).join(',\n'), ll = links.map(k => '    ' + JSON.stringify(k)).join(',\n');
+  return `${h},\n  "nodes": [\n${nl}\n  ],\n  "links": [${links.length ? '\n' + ll + '\n  ' : ''}]\n}\n`;
+}
+function newMap(title){
+  const t = nowIso(), rootId = 'root';
+  return { format: FORMAT, id: 'm' + rid(8), title, created: t, updated: t, rootId,
+    nodes: [{ id: rootId, parent: null, text: title, note: '', x: 0, y: 0, color: '' }], links: [] };
+}
+function normalize(m){
+  if (!m || !Array.isArray(m.nodes)) throw new Error('map.json の形式が正しくありません');
+  const seen = new Set();
+  m.nodes = m.nodes.filter(n => n && n.id && !seen.has(n.id) && seen.add(n.id)).map(n => ({
+    id: String(n.id), parent: n.parent ?? null, text: String(n.text ?? ''), note: String(n.note ?? ''),
+    x: +n.x || 0, y: +n.y || 0, color: n.color || '', ...(n.image && n.image.file ? { image: { file: n.image.file, w: +n.image.w || 200, ar: +n.image.ar || 1.5 } } : {}),
+    ...(n.collapsed ? { collapsed: true } : {}),
+  }));
+  if (!m.nodes.length) m.nodes.push({ id: 'root', parent: null, text: m.title || 'マインドマップ', note: '', x: 0, y: 0, color: '' });
+  if (!seen.has(m.rootId)) m.rootId = m.nodes[0].id;
+  const N = new Map(m.nodes.map(n => [n.id, n]));
+  for (const n of m.nodes) {
+    if (n.id === m.rootId || (n.parent && !N.has(n.parent))) n.parent = null;
+    // 循環を断つ
+    let p = n.parent, steps = 0; while (p && steps++ < 10000) { if (p === n.id) { n.parent = null; break; } p = N.get(p)?.parent; }
+  }
+  delete m.view;
+  m.links = (m.links || []).filter(k => N.has(k.from) && N.has(k.to) && k.from !== k.to).map(k => ({ id: k.id || 'l' + rid(), from: k.from, to: k.to, label: String(k.label || '') }));
+  m.format = FORMAT; m.id = m.id || 'm' + rid(8); m.created = m.created || nowIso(); m.updated = m.updated || m.created;
+  m.title = N.get(m.rootId).text || m.title || '無題';
+  return m;
+}
+function mapTools(m){
+  const N = new Map(m.nodes.map(n => [n.id, n]));
+  const byParent = new Map();
+  for (const n of m.nodes) { const k = n.parent ?? null; if (!byParent.has(k)) byParent.set(k, []); byParent.get(k).push(n); }
+  const root = N.get(m.rootId);
+  const kids = id => {
+    const arr = (byParent.get(id ?? null) || []).slice();
+    if (id === m.rootId) {  // ルート直下: 右側を上から、続いて左側を上から
+      const R = arr.filter(n => n.x >= root.x).sort((a, b) => a.y - b.y || a.x - b.x), Lf = arr.filter(n => n.x < root.x).sort((a, b) => a.y - b.y || b.x - a.x);
+      return [...R, ...Lf].map(n => n.id);
+    }
+    if (id == null) return arr.sort((a, b) => (a.id === m.rootId ? -1 : b.id === m.rootId ? 1 : a.y - b.y || a.x - b.x)).map(n => n.id);
+    return arr.sort((a, b) => a.y - b.y || a.x - b.x).map(n => n.id);
+  };
+  const desc = id => { const out = []; const st = [id]; while (st.length) { const c = st.pop(); for (const n of byParent.get(c) || []) { out.push(n.id); st.push(n.id); } } return out; };
+  return { N, kids, desc };
+}
+
+/* ---------------- アプリ状態 ---------------- */
+const S = {
+  backend: null, list: [],
+  m: null, dir: null, T: null,        // 現在のマップ
+  img: new Map(),                      // file -> {blob,url}
+  saved: new Set(),                    // 保存先に存在する画像
+  sel: null,                           // {t:'n'|'l', id}
+  mode: null,                          // {t:'reparent'|'link', src}
+  editing: null,
+  undo: [], redo: [],
+  dirty: false, saving: false, saveTimer: 0, err: null,
+  V: { x: 0, y: 0, z: 1 },
+  withKids: LS.get('withKids', true),
+};
+const nodeEls = new Map(), sizes = new Map();
+const idx = () => (S.T = mapTools(S.m));
+const node = id => S.T.N.get(id);
+
+/* ---------------- 起動・保存先 ---------------- */
+async function boot(){
+  setupStaticIcons();
+  const emb = document.getElementById('mmData');
+  if (emb && await bootFileMode(emb)) return;
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW', e));
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('key')) { LS.set('key', qs.get('key')); history.replaceState(null, '', location.pathname + location.hash); }
+  if (location.protocol === 'http:') {  // server.py は http で動く（GitHub Pages などの https 公開時は確認しない）
+    const key = LS.get('key', '');
+    const p = await ServerBackend.probe(key);
+    if (p === true) { S.backend = new ServerBackend(key); await ensureRootFiles(); return showHome(true); }
+    if (p === 'auth') {
+      const k = await promptDlg('アクセスキー', '', '<p>サーバーに表示された URL の <code>?key=</code> の後ろの文字を入力してください。</p>');
+      if (k) { LS.set('key', k.trim()); location.reload(); return; }
+    }
+  }
+  try {
+    await idb();
+    const h = await kvGet('dirHandle');
+    if (h) {
+      const perm = h.queryPermission ? await h.queryPermission({ mode: 'readwrite' }).catch(() => 'denied') : 'prompt';
+      if (perm === 'granted') { S.backend = new FolderBackend(await mapsDir(h), h.name); await ensureRootFiles(); return showHome(true); }
+      S.pendingHandle = h;
+    }
+  } catch (e) { console.warn(e); S.idbBroken = true; }
+  S.backend = new BrowserBackend();
+  // ブラウザ内保存のとき、容量不足などで勝手に消されないよう依頼（ホーム画面に追加済みだと通りやすい）
+  try { if (navigator.storage?.persist && !(await navigator.storage.persisted())) S.persisted = await navigator.storage.persist(); else S.persisted = true; } catch {}
+  showHome(true);
+}
+async function mapsDir(h){ return h.name === 'maps' ? h : h.getDirectoryHandle('maps', { create: true }); }
+async function ensureRootFiles(){
+  try { if (S.backend.hasRoot && !(await S.backend.hasRoot('README.md'))) await S.backend.writeRoot('README.md', README_MD); } catch (e) { console.warn(e); }
+}
+async function pickFolder(){
+  if (!CAN_FOLDER) return toast(IS_IOS ? 'iPhone / iPad はフォルダ保存に非対応です。ブラウザ内保存＋ZIP書き出しを使ってください' : 'このブラウザはフォルダ保存に非対応です（Chrome / Edge で使えます）', 4500);
+  let h; try { h = await showDirectoryPicker({ id: 'mindmap', mode: 'readwrite' }); } catch { return; }
+  const prev = S.backend;
+  await kvSet('dirHandle', h);
+  S.backend = new FolderBackend(await mapsDir(h), h.name); S.pendingHandle = null;
+  await ensureRootFiles();
+  if (prev && prev.kind === 'browser') {
+    const local = await prev.list().catch(() => []);
+    if (local.length && await confirmDlg('ブラウザ内のマップをコピー', `<p>このブラウザ内に ${local.length} 件のマップがあります。選んだフォルダにコピーしますか？</p><small>ブラウザ内のデータはそのまま残ります。</small>`, 'コピーする')) {
+      const have = new Set((await S.backend.list()).map(x => x.dir));
+      for (const it of local) { let d = it.dir, i = 2; while (have.has(d)) d = `${it.dir} (${i++})`; await copyMap(prev, it.dir, S.backend, d); have.add(d); }
+      toast(`${local.length} 件コピーしました`);
+    }
+  }
+  showHome(true);
+}
+async function reconnect(){
+  const h = S.pendingHandle; if (!h) return;
+  const p = await h.requestPermission({ mode: 'readwrite' }).catch(() => 'denied');
+  if (p === 'granted') { S.backend = new FolderBackend(await mapsDir(h), h.name); S.pendingHandle = null; await ensureRootFiles(); showHome(true); }
+  else toast('許可されませんでした');
+}
+async function useBrowser(){ await kvDel('dirHandle').catch(() => {}); S.pendingHandle = null; S.backend = new BrowserBackend(); showHome(true); }
+async function copyMap(from, dir, to, newDir){
+  const m = normalize(await from.load(dir));
+  for (const n of m.nodes) if (n.image) { const b = await from.readImage(dir, n.image.file); if (b) await to.writeImage(newDir, n.image.file, b); }
+  await to.writeMap(newDir, toJson(m), toMarkdown(m));
+}
+function storageDialog(){
+  const cur = S.backend?.kind;
+  const folderDesc = IS_MOBILE
+    ? (CAN_FOLDER ? 'スマホ内のフォルダ（例: <code>Documents/mindmap</code>）を選ぶと、その中の <code>maps/</code> に map.md・map.json・画像を保存します。' : 'このブラウザは非対応です（iPhone / iPad の Safari・Chrome は不可。Android の Chrome なら使えます）。')
+    : (CAN_FOLDER ? 'mindmap.html があるフォルダを選ぶと、その中の <code>maps/</code> に保存します。' : 'このブラウザは非対応です（Chrome / Edge で使えます）。');
+  dialog({ title: '保存先', html: `
+    <button class="opt" data-k="folder" ${CAN_FOLDER ? '' : 'disabled'}>${icon('folder')}<div><b>${IS_MOBILE ? 'スマホのフォルダに保存' : 'PCのフォルダに直接保存'}${cur === 'folder' ? '（使用中）' : ''}</b><span>${folderDesc}</span></div></button>
+    <button class="opt" data-k="browser" ${cur === 'server' ? 'disabled' : ''}>${icon('note')}<div><b>このブラウザ（アプリ）内に保存${cur === 'browser' ? '（使用中）' : ''}</b><span>どの端末でも動きます。${IS_IOS ? 'ホーム画面に追加して使うとデータが消えにくくなります。' : ''}ファイルが欲しいときは「ZIPで書き出し」。展開すると <code>maps/</code> と同じ構成です。</span></div></button>
+    <div class="opt" style="cursor:default">${icon('share')}<div><b>PCの maps/ に保存（server.py）${cur === 'server' ? '（使用中）' : ''}</b><span>PCで <code>python3 server.py</code> を実行し、表示されたURLを同じWi-Fiのスマホで開きます。</span></div></div>`,
+    buttons: [{ label: '閉じる', value: null }],
+    onBuild: (dlg, done) => dlg.querySelectorAll('button.opt').forEach(b => b.onclick = () => { done(null); b.dataset.k === 'folder' ? pickFolder() : useBrowser(); }) });
+}
+function browserNote(){
+  const d = daysAgo(LS.get('lastBackup', 0));
+  const bk = d == null ? 'まだバックアップしていません' : d === 0 ? '今日バックアップ済み' : `最終バックアップ: ${d}日前`;
+  if (IS_IOS && !IS_STANDALONE) return `共有ボタン →「ホーム画面に追加」で使うとデータが消えにくくなります ・ ${bk}`;
+  return `自動で保存されます（この端末のブラウザ内） ・ ${bk}`;
+}
+function daysAgo(t){ if (!t) return null; return Math.floor((Date.now() - t) / 86400000); }
+
+/* ---------------- 一覧画面 ---------------- */
+async function showHome(reload){
+  if (S.m) await closeMap();
+  $('#editor').classList.add('hidden'); $('#home').classList.remove('hidden');
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  const b = S.backend, box = $('#storeBox');
+  if (reload) { try { S.list = await b.list(); } catch (e) { S.list = []; toast('一覧を読み込めません: ' + e.message, 4000); } }
+  const warn = b.kind === 'browser';
+  box.className = 'store' + (warn || b.kind === 'memory' ? ' warn' : '');
+  if (b.kind === 'memory') {
+    box.innerHTML = `<span class="dot"></span><div class="stxt"><b>共有されたファイルを開いています</b><br><small style="color:var(--muted)">編集はこのファイルの中だけです。送り返すときはマップ右上の「共有」→「ファイルで共有」。</small></div>
+      <div class="sbtns"><button class="btn primary" id="sMine">${icon('down')}自分のマップに保存</button></div>`;
+    $('#sMine').onclick = saveSharedToMine;
+  } else {
+  box.innerHTML = `<span class="dot"></span><div class="stxt">保存先: <b>${esc(b.label)}</b>${b.kind !== 'browser' ? ' の <code>maps/</code>' : ''}<br><small style="color:var(--muted)">${
+    S.pendingHandle ? `前回のフォルダ「${esc(S.pendingHandle.name)}」への再接続が必要です` :
+    warn ? (S.idbBroken ? 'このブラウザでは保存できません。ZIPで書き出してください。' : browserNote()) : '自動で保存されます'}</small></div><div class="sbtns">
+    ${S.pendingHandle ? `<button class="btn primary" id="sReconnect">${icon('folder')}再接続</button>` : ''}
+    ${warn && !S.pendingHandle && CAN_FOLDER ? `<button class="btn primary" id="sFolder">${icon('folder')}フォルダに保存</button>` : ''}
+    ${warn && S.list.length ? `<button class="btn" id="sBackup">${icon('down')}バックアップ</button>` : ''}
+    <button class="btn" id="sChange">${icon('folder')}保存先</button></div>`;
+  $('#sChange').onclick = storageDialog;
+  if (S.pendingHandle) $('#sReconnect').onclick = reconnect;
+  $('#sFolder')?.addEventListener('click', pickFolder);
+  $('#sBackup')?.addEventListener('click', () => exportZip(S.list.map(x => x.dir)));
+  }
+  S.list.sort((x, y) => String(y.updated).localeCompare(String(x.updated)));
+  const g = $('#mapGrid');
+  if (!S.list.length) g.innerHTML = `<div class="empty" style="grid-column:1/-1">まだマップがありません。<br>「新規作成」か「読み込み」から始めましょう。</div>`;
+  else g.innerHTML = S.list.map(it => `<div class="card" data-dir="${esc(it.dir)}"><h3>${esc(it.title)}</h3>
+      <div class="meta">${esc(fmtDate(it.updated))} ・ ${it.count}ノード</div><div class="dirn">maps/${esc(it.dir)}/</div>
+      <div class="acts"><button data-a="rename" title="名前を変更">${icon('rename')}</button><button data-a="dup" title="複製">${icon('dup')}</button><button data-a="zip" title="ZIPで書き出し">${icon('down')}</button><button data-a="del" title="削除">${icon('trash')}</button></div></div>`).join('');
+  g.querySelectorAll('.card').forEach(c => c.onclick = e => {
+    const a = e.target.closest('[data-a]')?.dataset.a, dir = c.dataset.dir;
+    if (!a) return openMap(dir);
+    e.stopPropagation();
+    ({ rename: renameMap, dup: dupMap, zip: d => exportZip([d]), del: deleteMap })[a](dir);
+  });
+  $('#homeTip').innerHTML = `ヒント: マップを開いて <b>AI</b> ボタンを押すと、AIに貼り付けやすい Markdown がコピーされます。AIが返した Markdown は「⋯ → AIの編集を取り込む」で反映できます（位置や画像は保持）。`;
+  writeIndexSoon(reload ? 0 : 300);
+}
+async function uniqueDir(base){ const have = new Set(S.list.map(x => x.dir)); let d = base, i = 2; while (have.has(d)) d = `${base} (${i++})`; return d; }
+async function createMap(){
+  const t = await promptDlg('新しいマップ', '', '<small>中心になるテーマを入力してください</small>'); if (t == null) return;
+  const title = t.trim() || '新しいマップ'; const d = new Date();
+  const dir = await uniqueDir(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${safeDirName(title)}`);
+  const m = newMap(title);
+  await S.backend.writeMap(dir, toJson(m), toMarkdown(m));
+  S.list.push({ dir, id: m.id, title, updated: m.updated, count: 1 });
+  openMap(dir, { editRoot: false, selectRoot: true });
+}
+async function renameMap(dir){
+  const it = S.list.find(x => x.dir === dir);
+  const t = await promptDlg('名前を変更', it.title, '<small>中心ノードとフォルダ名も変わります</small>'); if (t == null || !t.trim()) return;
+  try {
+    const m = normalize(await S.backend.load(dir)); m.nodes.find(n => n.id === m.rootId).text = t.trim(); m.title = t.trim(); m.updated = nowIso();
+    const date = dir.match(/^\d{4}-\d{2}-\d{2}_/)?.[0] || '';
+    let nd = date + safeDirName(t);
+    if (nd !== dir) { S.list = S.list.filter(x => x.dir !== dir); nd = await uniqueDir(nd); await S.backend.rename(dir, nd); } else nd = dir;
+    await S.backend.writeMap(nd, toJson(m), toMarkdown(m));
+    showHome(true);
+  } catch (e) { toast('変更できませんでした: ' + e.message, 4000); showHome(true); }
+}
+async function dupMap(dir){
+  const it = S.list.find(x => x.dir === dir);
+  const nd = await uniqueDir(dir.replace(/ \(\d+\)$/, '') + ' のコピー');
+  const m = normalize(await S.backend.load(dir)); m.id = 'm' + rid(8); m.created = m.updated = nowIso();
+  for (const n of m.nodes) if (n.image) { const b = await S.backend.readImage(dir, n.image.file); if (b) await S.backend.writeImage(nd, n.image.file, b); }
+  await S.backend.writeMap(nd, toJson(m), toMarkdown(m));
+  toast(`「${it.title}」を複製しました`); showHome(true);
+}
+async function deleteMap(dir){
+  const it = S.list.find(x => x.dir === dir);
+  const where = S.backend.kind === 'browser' ? '元に戻せません。' : '<code>maps/_trash/</code> に移動します。';
+  if (!await confirmDlg('削除', `<p>「${esc(it.title)}」を削除しますか？</p><small>${where}</small>`, '削除', true)) return;
+  try { await S.backend.deleteMap(dir); } catch (e) { toast('削除できませんでした: ' + e.message, 4000); }
+  showHome(true);
+}
+
+/* index.md（maps/ の目次。AIが全体を把握するため） */
+let indexTimer = 0;
+function writeIndexSoon(ms = 1500){
+  if (!S.backend || S.backend.kind === 'browser' || S.backend.kind === 'memory') return;
+  clearTimeout(indexTimer);
+  indexTimer = setTimeout(async () => { try { await S.backend.writeRoot('index.md', buildIndex(S.list)); } catch (e) { console.warn(e); } }, ms);
+}
+function buildIndex(list){
+  const l = list.slice().sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
+  return ['# マインドマップ一覧', '', `（自動生成 ${nowIso()} ・ 各マップの内容は <フォルダ>/map.md を読んでください。書式は README.md）`, '',
+    ...l.map(x => `- [${x.title}](<${x.dir}/map.md>) — 更新 ${fmtDate(x.updated)} ・ ${x.count}ノード`), ''].join('\n');
+}
+
+/* ---------------- マップを開く / 閉じる ---------------- */
+async function openMap(dir, opt = {}){
+  let m;
+  try { m = normalize(await S.backend.load(dir)); } catch (e) { return toast('開けませんでした: ' + e.message, 4000); }
+  S.m = m; S.dir = dir; S.sel = null; S.mode = null; S.undo = []; S.redo = []; S.dirty = false; S.err = null;
+  idx();
+  S.img.clear(); S.saved.clear();
+  await Promise.all(m.nodes.filter(n => n.image).map(async n => {
+    const b = await S.backend.readImage(dir, n.image.file).catch(() => null);
+    if (b) { S.img.set(n.image.file, { blob: b, url: URL.createObjectURL(b) }); S.saved.add(n.image.file); }
+  }));
+  $('#home').classList.add('hidden'); $('#editor').classList.remove('hidden');
+  if (location.hash.slice(1) !== encodeURIComponent(dir)) history.pushState(null, '', '#' + encodeURIComponent(dir));
+  $('#eg').innerHTML = ''; nodeEls.forEach(el => el.remove()); nodeEls.clear(); sizes.clear();
+  render();
+  if (opt.layout) { autoLayout(null, true); render(); }
+  const v = LS.get('view.' + m.id, null);  // 表示位置は端末ごとに保存（画面サイズが違うため）
+  if (v && !opt.layout) { S.V = v; applyView(); } else fit();
+  updateUndo();
+  if (opt.selectRoot) select({ t: 'n', id: m.rootId });
+  setStatus();
+  updateBar();
+}
+async function closeMap(){
+  if (S.editing) commitEdit();
+  if (S.m) { LS.set('view.' + S.m.id, S.V); await saveNow(); }
+  for (const v of S.img.values()) URL.revokeObjectURL(v.url);
+  S.img.clear(); S.m = null; S.T = null; closeSheet(); setMode(null);
+}
+
+/* ---------------- 保存 ---------------- */
+function touch(){ S.dirty = true; setStatus(); clearTimeout(S.saveTimer); S.saveTimer = setTimeout(saveNow, 700); }
+async function saveNow(){
+  clearTimeout(S.saveTimer);
+  if (!S.m || !S.dirty) return;
+  if (S.saving) { S.saveTimer = setTimeout(saveNow, 300); return; }
+  S.saving = true; S.dirty = false; setStatus();
+  const m = S.m, dir = S.dir, be = S.backend;
+  try {
+    m.title = node(m.rootId)?.text || '無題';
+    m.updated = nowIso(); delete m.view; LS.set('view.' + m.id, S.V);
+    const refs = new Set(m.nodes.filter(n => n.image).map(n => n.image.file));
+    for (const f of refs) if (!S.saved.has(f) && S.img.has(f)) { await be.writeImage(dir, f, S.img.get(f).blob); S.saved.add(f); }
+    await be.writeMap(dir, toJson(m), toMarkdown(m));
+    for (const f of [...S.saved]) if (!refs.has(f)) { await be.deleteImage(dir, f).catch(() => {}); S.saved.delete(f); }
+    S.err = null;
+    const it = S.list.find(x => x.dir === dir); if (it) Object.assign(it, { id: m.id, title: m.title, updated: m.updated, count: m.nodes.length }); else S.list.push({ dir, id: m.id, title: m.title, updated: m.updated, count: m.nodes.length });
+    writeIndexSoon();
+  } catch (e) {
+    console.error(e); S.err = e; S.dirty = true;
+    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') toast('フォルダへの書き込みが許可されていません。一覧から再接続してください', 5000);
+    else toast('保存に失敗しました: ' + e.message, 4000);
+    clearTimeout(S.saveTimer); S.saveTimer = setTimeout(saveNow, 5000);
+  } finally { S.saving = false; setStatus(); }
+}
+function setStatus(){
+  const el = $('#eStatus'); if (!el) return;
+  el.classList.toggle('err', !!S.err); el.classList.toggle('ok', !S.err && !S.saving && !S.dirty);
+  el.textContent = S.err ? '保存エラー' : S.saving ? '保存中…' : S.dirty ? '未保存' : '保存済み';
+}
+window.addEventListener('beforeunload', e => { if ((S.m && (S.dirty || S.saving)) || (S.fileMode && S.fileChanged)) { saveNow(); e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.m) { if (S.editing) commitEdit(); saveNow(); } });
+
+/* ---------------- 履歴 ---------------- */
+function snap(){ return JSON.stringify({ nodes: S.m.nodes, links: S.m.links, rootId: S.m.rootId }); }
+function checkpoint(){ S.undo.push(snap()); if (S.undo.length > 200) S.undo.shift(); S.redo.length = 0; updateUndo(); }
+function restore(s){ const o = JSON.parse(s); Object.assign(S.m, o); idx(); if (S.sel && !(S.sel.t === 'n' ? node(S.sel.id) : S.m.links.find(k => k.id === S.sel.id))) S.sel = null; render(); touch(); updateBar(); refreshSheet(); }
+function undo(){ if (S.editing) commitEdit(); if (!S.undo.length) return; S.redo.push(snap()); restore(S.undo.pop()); updateUndo(); }
+function redo(){ if (!S.redo.length) return; S.undo.push(snap()); restore(S.redo.pop()); updateUndo(); }
+function updateUndo(){ $('#eUndo').disabled = !S.undo.length; $('#eRedo').disabled = !S.redo.length; }
+
+/* ---------------- 描画 ---------------- */
+function visibleSet(){
+  const vis = new Set(), st = [];
+  for (const id of S.T.kids(null)) st.push(id);
+  while (st.length) { const id = st.pop(); vis.add(id); const n = node(id); if (!n.collapsed) for (const c of S.T.kids(id)) st.push(c); }
+  return vis;
+}
+function sideOf(n){ // 親から見て左右どちら側か (-1/1)
+  if (!n.parent) return 1;
+  const p = node(n.parent); return n.x < p.x ? -1 : 1;
+}
+function render(){
+  if (!S.m) return;
+  const vis = visibleSet(), world = $('#world');
+  for (const [id, el] of nodeEls) if (!vis.has(id)) { el.remove(); nodeEls.delete(id); sizes.delete(id); }
+  for (const id of vis) {
+    const n = node(id); let el = nodeEls.get(id);
+    if (!el) { el = document.createElement('div'); el.dataset.id = id; world.append(el); nodeEls.set(id, el); }
+    const kids = S.T.kids(id).length, imgu = n.image && S.img.get(n.image.file)?.url;
+    const sig = JSON.stringify([n.text, n.note ? 1 : 0, n.color, n.image, imgu, n.collapsed, kids, sideOf(n), id === S.m.rootId, !n.parent, S.sel?.t === 'n' && S.sel.id === id]);
+    if (el._sig !== sig && S.editing !== id) {
+      el._sig = sig;
+      el.className = 'node' + (id === S.m.rootId ? ' root' : '') + (!n.parent && id !== S.m.rootId ? ' float' : '') + (n.color ? ' c-' + n.color : '') + (n.image && !n.text ? ' imgonly' : '') + (S.sel?.t === 'n' && S.sel.id === id ? ' sel' : '');
+      let h = '';
+      if (n.image) h += `<img src="${imgu || ''}" alt="" style="width:${n.image.w}px;height:${Math.round(n.image.w / (n.image.ar || 1.5))}px" draggable="false">`;
+      h += `<div class="txt"></div>`;
+      if (n.note) h += `<span class="nmark" title="メモあり">${icon('note')}</span>`;
+      if (kids) h += `<button class="fold${sideOf(n) < 0 ? ' l' : ''}" title="${n.collapsed ? '展開' : '折りたたむ'}">${n.collapsed ? '+' + S.T.desc(id).length : '−'}</button>`;
+      if (n.image && S.sel?.t === 'n' && S.sel.id === id) h += `<span class="rsz" title="ドラッグで画像サイズ変更"></span>`;
+      el.innerHTML = h;
+      el.querySelector('.txt').textContent = n.text;
+      el.title = n.note || '';
+    }
+    if (isFinite(n.x) && isFinite(n.y)) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
+  }
+  measure();
+  renderEdges();
+  $('#eTitle').textContent = node(S.m.rootId)?.text || '';
+}
+function measure(){ for (const [id, el] of nodeEls) sizes.set(id, { w: el.offsetWidth, h: el.offsetHeight }); }
+function sz(id){ const s = sizes.get(id); if (s) return s; const n = node(id); const len = [...(n.text || '')].reduce((a, c) => a + (c.charCodeAt(0) > 255 ? 14 : 8), 0) + 26;
+  const w = Math.max(n.image ? n.image.w + 26 : 0, clamp(len, 50, 300)); const lines = Math.ceil(len / 300); return { w, h: 20 * lines + 18 + (n.image ? n.image.w / (n.image.ar || 1.5) + 6 : 0) }; }
+let edgeRaf = 0;
+function renderEdgesSoon(){ if (!edgeRaf) edgeRaf = requestAnimationFrame(() => { edgeRaf = 0; renderEdges(); }); }
+function clipToBox(cx, cy, w, h, tx, ty){
+  const dx = tx - cx, dy = ty - cy; if (!dx && !dy) return [cx, cy];
+  const sx = dx ? (w / 2 + 4) / Math.abs(dx) : Infinity, sy = dy ? (h / 2 + 4) / Math.abs(dy) : Infinity, s = Math.min(sx, sy, 1);
+  return [cx + dx * s, cy + dy * s];
+}
+function renderEdges(){
+  if (!S.m) return;
+  let h = '';
+  for (const [id] of nodeEls) {
+    const n = node(id); if (!n.parent || !nodeEls.has(n.parent)) continue;
+    const p = node(n.parent), ps = sz(p.id), cs = sz(id);
+    if (![n.x, n.y, p.x, p.y].every(isFinite)) continue;
+    const overlapX = Math.abs(n.x - p.x) < (ps.w + cs.w) / 2;
+    let d;
+    if (overlapX) {
+      const dir = n.y >= p.y ? 1 : -1, x1 = p.x, y1 = p.y + dir * ps.h / 2, x2 = n.x, y2 = n.y - dir * cs.h / 2, my = (y1 + y2) / 2;
+      d = `M${x1} ${y1}C${x1} ${my} ${x2} ${my} ${x2} ${y2}`;
+    } else {
+      const dir = n.x >= p.x ? 1 : -1, x1 = p.x + dir * ps.w / 2, y1 = p.y, x2 = n.x - dir * cs.w / 2, y2 = n.y, mx = (x1 + x2) / 2;
+      d = `M${x1} ${y1}C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`;
+    }
+    const col = n.color ? COLOR_HEX[n.color] : '';
+    h += `<path class="e" d="${d}"${col ? ` style="stroke:${col}"` : ''}/>`;
+  }
+  for (const k of S.m.links) {
+    if (!nodeEls.has(k.from) || !nodeEls.has(k.to)) continue;
+    const a = node(k.from), b = node(k.to), as = sz(a.id), bs = sz(b.id);
+    if (![a.x, a.y, b.x, b.y].every(isFinite)) continue;
+    const [x1, y1] = clipToBox(a.x, a.y, as.w, as.h, b.x, b.y), [x2, y2] = clipToBox(b.x, b.y, bs.w, bs.h, a.x, a.y);
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, len = Math.hypot(x2 - x1, y2 - y1) || 1, bend = Math.min(60, len * 0.2);
+    const cx = mx - (y2 - y1) / len * bend, cy = my + (x2 - x1) / len * bend;
+    const d = `M${x1} ${y1}Q${cx} ${cy} ${x2} ${y2}`, sel = S.sel?.t === 'l' && S.sel.id === k.id;
+    h += `<path class="x${sel ? ' sel' : ''}" d="${d}" marker-end="url(#arw)"/><path class="xhit" data-link="${k.id}" d="${d}"/>`;
+    if (k.label) h += `<text x="${(mx + cx) / 2}" y="${(my + cy) / 2}" text-anchor="middle" dominant-baseline="middle">${esc(k.label)}</text>`;
+  }
+  $('#eg').innerHTML = h;
+}
+
+/* ---------------- 表示（パン / ズーム） ---------------- */
+function applyView(){
+  const V = S.V;
+  $('#world').style.transform = `translate(${V.x}px,${V.y}px) scale(${V.z})`;
+  const vp = $('#vp'), g = 24 * V.z;
+  vp.style.backgroundSize = `${g}px ${g}px`; vp.style.backgroundPosition = `${V.x}px ${V.y}px`;
+  $('#zLbl').textContent = Math.round(V.z * 100) + '%';
+}
+function zoomAt(z, sx, sy){
+  const V = S.V, r = $('#vp').getBoundingClientRect(); z = clamp(z, 0.1, 3);
+  const wx = (sx - r.left - V.x) / V.z, wy = (sy - r.top - V.y) / V.z;
+  V.z = z; V.x = sx - r.left - wx * z; V.y = sy - r.top - wy * z; applyView();
+}
+function zoomBy(f){ const r = $('#vp').getBoundingClientRect(); zoomAt(S.V.z * f, r.left + r.width / 2, r.top + r.height / 2); }
+function toWorld(sx, sy){ const r = $('#vp').getBoundingClientRect(); return { x: (sx - r.left - S.V.x) / S.V.z, y: (sy - r.top - S.V.y) / S.V.z }; }
+function viewCenter(){ const r = $('#vp').getBoundingClientRect(); return toWorld(r.left + r.width / 2, r.top + r.height / 2); }
+function fit(){
+  if (!nodeEls.size) return;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [id] of nodeEls) { const n = node(id), s = sz(id); x0 = Math.min(x0, n.x - s.w / 2); x1 = Math.max(x1, n.x + s.w / 2); y0 = Math.min(y0, n.y - s.h / 2); y1 = Math.max(y1, n.y + s.h / 2); }
+  const r = $('#vp').getBoundingClientRect(), top = 70, bot = 90, side = innerWidth >= 820 && !$('#sheet').classList.contains('hidden') ? 360 : 20;
+  const aw = r.width - 40 - side, ah = r.height - top - bot;
+  const z = clamp(Math.min(aw / (x1 - x0 || 1), ah / (y1 - y0 || 1)), 0.15, 1.4);
+  S.V = { z, x: 20 + (aw - (x1 - x0) * z) / 2 - x0 * z, y: top + (ah - (y1 - y0) * z) / 2 - y0 * z };
+  applyView();
+}
+function ensureVisible(id){
+  const n = node(id), s = sz(id), r = $('#vp').getBoundingClientRect(), V = S.V;
+  const sx = n.x * V.z + V.x, sy = n.y * V.z + V.y, hw = s.w * V.z / 2 + 30, hh = s.h * V.z / 2 + 30;
+  const bottomLimit = r.height - (innerWidth < 820 && !$('#sheet').classList.contains('hidden') ? $('#sheet').offsetHeight : 90);
+  let dx = 0, dy = 0;
+  if (sx - hw < 0) dx = hw - sx; else if (sx + hw > r.width) dx = r.width - sx - hw;
+  if (sy - hh < 70) dy = 70 - sy + hh; else if (sy + hh > bottomLimit) dy = bottomLimit - sy - hh;
+  if (dx || dy) { V.x += dx; V.y += dy; applyView(); }
+}
+
+/* ---------------- 選択 / ツールバー ---------------- */
+function select(sel){
+  if (S.editing) commitEdit();
+  const prev = S.sel; S.sel = sel;
+  for (const id of [prev?.t === 'n' && prev.id, sel?.t === 'n' && sel.id]) if (id && nodeEls.get(id)) nodeEls.get(id)._sig = null;
+  render(); updateBar();
+  if (!$('#sheet').classList.contains('hidden')) { if (sel?.t === 'n') openSheet(); else closeSheet(); }
+}
+function updateBar(){
+  const bar = $('#bar'), s = S.sel, B = (a, ic, lb, cls = '') => `<button data-a="${a}" class="${cls}">${icon(ic)}<span>${lb}</span></button>`;
+  if (s?.t === 'n') {
+    const isRoot = s.id === S.m.rootId;
+    bar.innerHTML = B('child', 'child', '子') + B('sib', 'sib', '兄弟') + B('edit', 'edit', '編集') + B('image', 'image', '画像') + B('note', 'note', '詳細') + B('reparent', 'move', '親を変更') + B('link', 'link', '関連線') + B('del', 'trash', '削除', 'danger');
+    if (isRoot) { bar.querySelector('[data-a=sib]').disabled = true; bar.querySelector('[data-a=reparent]').disabled = true; bar.querySelector('[data-a=del]').disabled = true; }
+  } else if (s?.t === 'l') {
+    bar.innerHTML = B('llabel', 'tag', 'ラベル') + B('lrev', 'move', '向きを反転') + B('ldel', 'trash', '削除', 'danger');
+  } else {
+    bar.innerHTML = B('new', 'plus', 'ノード') + B('newimg', 'image', '画像') + B('layout', 'layout', '整列') + B('fit', 'fit', '全体');
+  }
+}
+$('#bar').addEventListener('click', e => {
+  const a = e.target.closest('button')?.dataset.a; if (!a) return;
+  const id = S.sel?.id;
+  ({
+    child: () => addChild(id), sib: () => addSibling(id), edit: () => startEdit(id), image: () => pickImage(img => setNodeImage(id, img)),
+    note: () => openSheet(), reparent: () => setMode({ t: 'reparent', src: id }), link: () => setMode({ t: 'link', src: id }), del: () => deleteNode(id),
+    llabel: () => editLinkLabel(id), lrev: () => { checkpoint(); const k = S.m.links.find(x => x.id === id); [k.from, k.to] = [k.to, k.from]; renderEdges(); touch(); },
+    ldel: () => { checkpoint(); S.m.links = S.m.links.filter(k => k.id !== id); S.sel = null; renderEdges(); updateBar(); touch(); },
+    new: () => addFloating(viewCenter(), true), newimg: () => pickImage(img => addImageNode(img, viewCenter(), null)),
+    layout: () => { checkpoint(); autoLayout(null); render(); fit(); touch(); }, fit: () => fit(),
+  })[a]?.();
+});
+function setMode(m){
+  S.mode = m; nodeEls.forEach(el => el.classList.remove('target'));
+  $('#mode').classList.toggle('hidden', !m);
+  if (m) $('#modeTxt').textContent = m.t === 'reparent' ? '新しい親ノードをタップ（空白をタップで独立ノードに）' : '関連線でつなぐ相手のノードをタップ';
+}
+$('#modeCancel').onclick = () => setMode(null);
+
+/* ---------------- 編集操作 ---------------- */
+function newId(){ let id; do id = 'n' + rid(4); while (S.T.N.has(id)); return id; }
+function addNode(fields){ const n = { id: newId(), parent: null, text: '', note: '', x: 0, y: 0, color: '', ...fields }; S.m.nodes.push(n); idx(); return n; }
+function visDesc(id){ const out = [], st = [id]; while (st.length) { const c = st.pop(); if (node(c).collapsed) continue; for (const k of S.T.kids(c)) { out.push(k); st.push(k); } } return out; }
+function subtreeBottom(id){ let b = -Infinity; for (const d of [id, ...visDesc(id)]) { const n = node(d); if (isFinite(n.y)) b = Math.max(b, n.y + sz(d).h / 2); } return b; }
+function subtreeTop(id){ let t = Infinity; for (const d of [id, ...visDesc(id)]) { const n = node(d); if (isFinite(n.y)) t = Math.min(t, n.y - sz(d).h / 2); } return t; }
+// サイズが変わったノードの周りで、同じ側の兄弟の枝が重ならないよう下へ押し出す（祖先まで遡る）
+function hgap(pid, cid){ // 親と子の横方向の重なりを解消
+  const p = node(pid), c = node(cid), dir = c.x >= p.x ? 1 : -1;
+  if (Math.abs(c.x - p.x) < 1) return;
+  const need = (p.x + dir * (sz(pid).w / 2 + 28)) - (c.x - dir * sz(cid).w / 2);
+  if (need * dir > 0) shiftTree(cid, need, 0);
+}
+function relax(id){
+  const n0 = node(id); if (!n0) return;
+  if (n0.parent && Math.abs(n0.y - node(n0.parent).y) < (sz(id).h + sz(n0.parent).h) / 2 + 40) hgap(n0.parent, id);
+  if (!n0.collapsed) for (const k of S.T.kids(id)) hgap(id, k);
+  let cur = id, guard = 0;
+  while (cur && guard++ < 200) {
+    const n = node(cur); if (!n || !n.parent) break;
+    const dir = sideOf(n), sibs = S.T.kids(n.parent).filter(k => sideOf(node(k)) === dir).sort((a, b) => subtreeTop(a) - subtreeTop(b));
+    for (let j = Math.max(1, sibs.indexOf(cur)); j < sibs.length; j++) {
+      const need = subtreeBottom(sibs[j - 1]) + 14 - subtreeTop(sibs[j]);
+      if (need > 0) shiftTree(sibs[j], 0, Math.ceil(need));
+    }
+    cur = n.parent;
+  }
+}
+function settle(id){ measure(); relax(id); render(); }
+function shiftTree(id, dx, dy){ for (const d of [id, ...S.T.desc(id)]) { const n = node(d); n.x += dx; n.y += dy; } }
+function childSide(pid){
+  const p = node(pid);
+  if (pid === S.m.rootId) { const ks = S.T.kids(pid).map(node); const r = ks.filter(k => k.x >= p.x).length, l = ks.length - r; return r <= l ? 1 : -1; }
+  return p.parent ? sideOf(p) : 1;
+}
+function addChild(pid, edit = true){
+  if (!pid) return;
+  checkpoint();
+  const p = node(pid); if (p.collapsed) { p.collapsed = false; }
+  const ks = S.T.kids(pid), dir = childSide(pid);
+  const sameSide = ks.filter(k => Math.sign(node(k).x - p.x || 1) === dir);
+  let x, y;
+  if (sameSide.length) { const last = node(sameSide[sameSide.length - 1]); x = last.x; y = subtreeBottom(last.id) + 22 + 18; }
+  else { const ps = sz(pid); x = p.x + dir * (ps.w / 2 + 60 + 40); y = p.y; }
+  const n = addNode({ parent: pid, x, y, color: pid === S.m.rootId ? '' : p.color });
+  if (pid === S.m.rootId) n.color = COLORS[1 + (ks.length % (COLORS.length - 2))][0];
+  render(); select({ t: 'n', id: n.id }); touch();
+  // 実サイズに合わせてX位置を補正
+  if (!sameSide.length) { n.x = p.x + dir * (sz(pid).w / 2 + 60 + sz(n.id).w / 2); render(); }
+  settle(n.id);
+  ensureVisible(n.id);
+  if (edit) startEdit(n.id);
+  return n;
+}
+function addSibling(id){
+  const s = node(id); if (!s || !s.parent) { if (s && !s.parent && id !== S.m.rootId) return addFloating({ x: s.x, y: subtreeBottom(id) + 40 }, true); return; }
+  checkpoint();
+  const y = subtreeBottom(id) + 22 + 18;
+  // 下にある兄弟（同じ側）を押し下げる
+  const p = node(s.parent), dir = sideOf(s);
+  const below = S.T.kids(s.parent).filter(k => k !== id && node(k).y > s.y && sideOf(node(k)) === dir);
+  for (const k of below) shiftTree(k, 0, 56);
+  const n = addNode({ parent: s.parent, x: s.x, y, color: s.color });
+  render(); settle(n.id); select({ t: 'n', id: n.id }); ensureVisible(n.id); touch(); startEdit(n.id);
+  return n;
+}
+function addFloating(pt, edit){
+  checkpoint();
+  const n = addNode({ x: pt.x, y: pt.y });
+  render(); select({ t: 'n', id: n.id }); touch(); if (edit) startEdit(n.id);
+  return n;
+}
+async function deleteNode(id){
+  if (!id || id === S.m.rootId) return toast('中心ノードは削除できません');
+  const ds = S.T.desc(id);
+  if (ds.length >= 5 && !await confirmDlg('削除', `<p>このノードと子孫 ${ds.length} 個を削除しますか？</p><small>元に戻す（Ctrl+Z）で復元できます</small>`, '削除', true)) return;
+  checkpoint();
+  const kill = new Set([id, ...ds]), par = node(id).parent;
+  S.m.nodes = S.m.nodes.filter(n => !kill.has(n.id));
+  S.m.links = S.m.links.filter(k => !kill.has(k.from) && !kill.has(k.to));
+  idx(); S.sel = null; render(); touch();
+  select(par && node(par) ? { t: 'n', id: par } : null);
+}
+function reparent(src, target){
+  if (src === S.m.rootId) return;
+  if (target && (target === src || S.T.desc(src).includes(target))) return toast('自分の子孫には付け替えできません');
+  checkpoint();
+  const n = node(src); n.parent = target || null; idx();
+  if (target) {
+    const p = node(target), dir = childSide(target), ks = S.T.kids(target).filter(k => k !== src);
+    const old = { x: n.x, y: n.y };
+    if (Math.abs(n.x - p.x) < sz(target).w / 2 + 20 || Math.sign(n.x - p.x) !== dir) {
+      const last = ks.length ? node(ks[ks.length - 1]) : null;
+      n.x = last ? last.x : p.x + dir * (sz(target).w / 2 + 60 + sz(src).w / 2);
+      n.y = last ? subtreeBottom(last.id) + 40 : p.y;
+      for (const d of S.T.desc(src)) { const c = node(d); c.x += n.x - old.x; c.y += n.y - old.y; }
+    }
+  }
+  render(); touch(); select({ t: 'n', id: src });
+}
+function addLink(a, b){
+  if (S.m.links.some(k => (k.from === a && k.to === b))) return toast('すでにつながっています');
+  checkpoint(); const k = { id: 'l' + rid(), from: a, to: b, label: '' }; S.m.links.push(k);
+  renderEdges(); touch(); select({ t: 'l', id: k.id }); toast('関連線を追加しました（ラベルも付けられます）');
+}
+async function editLinkLabel(id){
+  const k = S.m.links.find(x => x.id === id); if (!k) return;
+  const v = await promptDlg('関連線のラベル', k.label, '<small>例: 原因、参考、反対意見 など</small>'); if (v == null) return;
+  checkpoint(); k.label = v.trim(); renderEdges(); touch();
+}
+function toggleFold(id){ checkpoint(); const n = node(id); n.collapsed = !n.collapsed; if (!n.collapsed) delete n.collapsed; render(); touch(); }
+
+/* インライン編集 */
+function startEdit(id){
+  const n = node(id), el = nodeEls.get(id); if (!n || !el) return;
+  if (S.editing && S.editing !== id) commitEdit();
+  if (S.sel?.id !== id) { S.sel = { t: 'n', id }; render(); updateBar(); }
+  S.editing = id; el.classList.add('editing');
+  const t = el.querySelector('.txt'); t.textContent = n.text; t.contentEditable = PLAIN_OK ? 'plaintext-only' : 'true'; t.spellcheck = false;
+  t.focus();
+  const r = document.createRange(); r.selectNodeContents(t); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  t.onkeydown = e => {
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); commitEdit(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); commitEdit(true); }
+    else if (e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); const cur = S.editing; commitEdit(); addChild(cur); }
+  };
+  t.oninput = () => { sizes.set(id, { w: el.offsetWidth, h: el.offsetHeight }); renderEdgesSoon(); };
+  t.onblur = () => { if (S.editing === id) commitEdit(); };
+  t.onpaste = e => { if (!PLAIN_OK) { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); } };
+}
+function commitEdit(cancel){
+  const id = S.editing; if (!id) return; S.editing = null;
+  const el = nodeEls.get(id), n = node(id); if (!el || !n) return;
+  const t = el.querySelector('.txt'); t.contentEditable = 'false'; t.onblur = t.onkeydown = t.oninput = t.onpaste = null; el.classList.remove('editing');
+  const v = t.innerText.replace(/ /g, ' ').replace(/\n+$/, '').trim();
+  if (!cancel && v !== n.text) { checkpoint(); n.text = v; touch(); }
+  el._sig = null; render(); settle(id); refreshSheet();
+  getSelection()?.removeAllRanges();
+}
+
+/* ---------------- 画像 ---------------- */
+function pickImage(cb){ const f = $('#fImg'); f.value = ''; f.onchange = async () => { if (f.files[0]) cb(await processImage(f.files[0])); }; f.click(); }
+async function processImage(file){
+  try {
+    let src, w, h;
+    try { src = await createImageBitmap(file); w = src.width; h = src.height; }
+    catch { src = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); }); w = src.naturalWidth || 400; h = src.naturalHeight || 300; }
+    const ar = w / h || 1.5;
+    if ((file.type === 'image/gif' || file.type === 'image/svg+xml') && file.size < 4e6) return { blob: file, ext: file.type === 'image/gif' ? 'gif' : 'svg', ar };
+    const s = Math.min(1, 1600 / Math.max(w, h)), c = document.createElement('canvas'); c.width = Math.round(w * s); c.height = Math.round(h * s);
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    const enc = t => new Promise(r => c.toBlob(r, t, 0.85));
+    let blob = await enc('image/webp'); if (!blob || blob.type !== 'image/webp') blob = await enc('image/jpeg');
+    if (s === 1 && /image\/(png|jpeg|webp)/.test(file.type) && file.size <= blob.size) blob = file;
+    return { blob, ext: { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png' }[blob.type] || 'jpg', ar };
+  } catch (e) { toast('画像を読み込めませんでした'); throw e; }
+}
+function registerImage(id, img){
+  const file = `${id}-${rid(3)}.${img.ext}`;
+  S.img.set(file, { blob: img.blob, url: URL.createObjectURL(img.blob) });
+  return { file, w: img.ar >= 1 ? 220 : Math.round(220 * img.ar), ar: +img.ar.toFixed(4) };
+}
+function setNodeImage(id, img){ const n = node(id); if (!n) return; checkpoint(); n.image = registerImage(id, img); render(); settle(id); touch(); refreshSheet(); }
+function addImageNode(img, pt, parent){
+  checkpoint();
+  const n = addNode({ parent: parent || null, x: pt.x, y: pt.y });
+  n.image = registerImage(n.id, img);
+  if (parent) { const p = node(parent), dir = childSide(parent); const ks = S.T.kids(parent).filter(k => k !== n.id); const last = ks.length ? node(ks[ks.length - 1]) : null;
+    n.x = last ? last.x : p.x + dir * (sz(parent).w / 2 + 60 + n.image.w / 2 + 14); n.y = last ? subtreeBottom(last.id) + 40 + n.image.w / n.image.ar / 2 : p.y; }
+  render(); if (parent) settle(n.id); select({ t: 'n', id: n.id }); touch(); ensureVisible(n.id);
+}
+
+/* ---------------- 自動整列 ---------------- */
+function autoLayout(startId, balance = false){
+  const GX = 56, GY = 14, T = S.T;
+  const vk = id => node(id).collapsed ? [] : T.kids(id);
+  const memo = new Map();
+  const sh = id => { if (memo.has(id)) return memo.get(id); const k = vk(id); const kh = k.reduce((a, c) => a + sh(c), 0) + GY * Math.max(0, k.length - 1); const v = Math.max(sz(id).h, kh); memo.set(id, v); return v; };
+  const before = new Map(S.m.nodes.map(n => [n.id, { x: n.x, y: n.y }]));
+  const place = (id, x, top, dir) => {
+    const n = node(id), s = sz(id), k = vk(id); n.x = x;
+    const kh = k.reduce((a, c) => a + sh(c), 0) + GY * Math.max(0, k.length - 1), H = Math.max(s.h, kh);
+    n.y = top + H / 2; let y = top + (H - kh) / 2;
+    for (const c of k) { place(c, x + dir * (s.w / 2 + GX + sz(c).w / 2), y, dir); y += sh(c) + GY; }
+  };
+  const layoutRoot = () => {
+    const r = node(S.m.rootId), rs = sz(r.id), ks = vk(r.id);
+    let R = [], Lf = [];
+    if (balance) { let hr = 0, hl = 0; for (const c of ks) { if (hr <= hl) { R.push(c); hr += sh(c); } else { Lf.push(c); hl += sh(c); } } }
+    else { R = ks.filter(c => node(c).x >= r.x); Lf = ks.filter(c => node(c).x < r.x); }
+    for (const [side, dir] of [[R, 1], [Lf, -1]]) {
+      const tot = side.reduce((a, c) => a + sh(c), 0) + GY * 2 * Math.max(0, side.length - 1); let y = r.y - tot / 2;
+      for (const c of side) { place(c, r.x + dir * (rs.w / 2 + GX * 1.3 + sz(c).w / 2), y, dir); y += sh(c) + GY * 2; }
+    }
+  };
+  const layoutSub = id => { const n = node(id), ox = n.x, oy = n.y, dir = n.parent ? sideOf(n) : 1; place(id, n.x, 0, dir); const dx = ox - n.x, dy = oy - n.y; shiftTree(id, dx, dy); };
+  if (startId && startId !== S.m.rootId) layoutSub(startId);
+  else {
+    layoutRoot();
+    // 独立ノード群はメインの下に並べる（未配置または balance 時）
+    const floats = T.kids(null).filter(id => id !== S.m.rootId);
+    if (floats.length && balance) {
+      let maxY = -Infinity; for (const id of [S.m.rootId, ...T.desc(S.m.rootId)]) maxY = Math.max(maxY, node(id).y + sz(id).h / 2);
+      let y = maxY + 80; const x0 = node(S.m.rootId).x;
+      for (const f of floats) { place(f, x0, y, 1); y += sh(f) + 40; }
+    } else for (const f of floats) layoutSub(f);
+  }
+  // 折りたたまれた子孫は親と一緒に移動
+  for (const n of S.m.nodes) if (n.collapsed) { const b = before.get(n.id), dx = n.x - b.x, dy = n.y - b.y; if (dx || dy) for (const d of T.desc(n.id)) { const c = node(d); c.x = before.get(d).x + dx; c.y = before.get(d).y + dy; } }
+}
+
+/* ---------------- 詳細パネル ---------------- */
+function openSheet(){
+  const id = S.sel?.t === 'n' ? S.sel.id : null; if (!id) return;
+  const sh = $('#sheet'); sh.classList.remove('hidden'); sh.dataset.id = id; buildSheet(); ensureVisible(id);
+}
+function closeSheet(){ $('#sheet').classList.add('hidden'); }
+function refreshSheet(){ const sh = $('#sheet'); if (!sh.classList.contains('hidden')) { if (S.sel?.t === 'n') { sh.dataset.id = S.sel.id; buildSheet(); } else closeSheet(); } }
+function buildSheet(){
+  const sh = $('#sheet'), id = sh.dataset.id, n = node(id); if (!n) return closeSheet();
+  const imgu = n.image && S.img.get(n.image.file)?.url;
+  sh.innerHTML = `<div class="hd"><b>ノードの詳細</b><button class="btn icon" data-a="close" title="閉じる">${icon('close')}</button></div>
+    <div><label>テキスト</label><textarea data-f="text" rows="2">${esc(n.text)}</textarea></div>
+    <div><label>メモ（AIへの補足・詳細など）</label><textarea data-f="note" rows="4" placeholder="自由に書けます">${esc(n.note)}</textarea></div>
+    <div><label>色</label><div class="sw">${COLORS.map(([k, l]) => `<button data-c="${k}" title="${l}" class="${(n.color || '') === k ? 'on' : ''}" style="background:${k ? COLOR_HEX[k] : 'var(--surf)'}"></button>`).join('')}</div></div>
+    <div><label>画像</label>${n.image ? `<img class="imgprev" src="${imgu || ''}" alt=""><div style="margin-top:8px"><label>表示サイズ: <span id="wv">${n.image.w}</span>px</label><input type="range" min="40" max="900" step="10" value="${n.image.w}" data-f="w"></div>` : ''}
+      <div class="row" style="margin-top:6px"><button class="btn" data-a="img">${icon('image')}${n.image ? '差し替え' : '画像を追加'}</button>${n.image ? `<button class="btn danger" data-a="rmimg">${icon('trash')}外す</button>` : ''}</div></div>
+    <div class="row"><button class="btn" data-a="layout">${icon('layout')}この下を整列</button></div>`;
+  let cp = false;
+  sh.querySelectorAll('textarea').forEach(ta => {
+    ta.onfocus = () => { cp = false; };
+    ta.oninput = () => { if (!cp) { checkpoint(); cp = true; } n[ta.dataset.f] = ta.dataset.f === 'text' ? ta.value.replace(/\n+$/, '') : ta.value; render(); touch(); };
+    ta.onblur = () => settle(id);
+  });
+  const rng = sh.querySelector('[data-f=w]');
+  if (rng) { rng.onpointerdown = () => checkpoint(); rng.oninput = () => { n.image.w = +rng.value; $('#wv').textContent = rng.value; render(); touch(); }; rng.onchange = () => settle(id); }
+  sh.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { checkpoint(); n.color = b.dataset.c; render(); touch(); buildSheet(); });
+  sh.querySelector('[data-a=close]').onclick = closeSheet;
+  sh.querySelector('[data-a=img]').onclick = () => pickImage(img => setNodeImage(id, img));
+  sh.querySelector('[data-a=rmimg]')?.addEventListener('click', () => { checkpoint(); delete n.image; render(); touch(); buildSheet(); });
+  sh.querySelector('[data-a=layout]').onclick = () => { checkpoint(); autoLayout(id); render(); touch(); };
+}
+
+/* ---------------- ポインタ操作（マウス / タッチ / ペン 共通） ---------------- */
+const vp = $('#vp'), PTR = new Map();
+let G = null, lastTap = { t: 0, key: '', x: 0, y: 0 };
+vp.addEventListener('pointerdown', e => {
+  if (e.target.closest('.editing .txt')) return;
+  if (e.button > 0) return;
+  if (S.editing) commitEdit();
+  closeMenu();
+  PTR.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try { vp.setPointerCapture(e.pointerId); } catch {}
+  if (PTR.size === 2) { startPinch(); return; }
+  if (PTR.size > 2) return;
+  const t = e.target, nEl = t.closest('.node'), lEl = t.closest('[data-link]');
+  const tg = t.closest('.rsz') ? { k: 'rsz', id: nEl.dataset.id } : t.closest('.fold') ? { k: 'fold', id: nEl.dataset.id }
+    : nEl ? { k: 'n', id: nEl.dataset.id } : lEl ? { k: 'l', id: lEl.dataset.link } : { k: 'bg' };
+  G = { type: 'pending', tg, sx: e.clientX, sy: e.clientY, V0: { ...S.V }, touch: e.pointerType === 'touch' };
+  if (tg.k === 'rsz') { checkpoint(); G.type = 'rsz'; G.w0 = node(tg.id).image.w; }
+  e.preventDefault();
+});
+vp.addEventListener('pointermove', e => {
+  if (!PTR.has(e.pointerId)) return;
+  PTR.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (G?.type === 'pinch') return doPinch();
+  if (!G) return;
+  const dx = e.clientX - G.sx, dy = e.clientY - G.sy;
+  if (G.type === 'pending' && Math.hypot(dx, dy) > (G.touch ? 9 : 4)) {
+    if (G.tg.k === 'n' && !S.mode) {
+      G.type = 'drag'; checkpoint();
+      const ids = S.withKids !== e.altKey ? [G.tg.id, ...S.T.desc(G.tg.id)] : [G.tg.id];
+      G.items = ids.map(id => ({ n: node(id), x: node(id).x, y: node(id).y }));
+      if (S.sel?.id !== G.tg.id) select({ t: 'n', id: G.tg.id });
+    } else if (G.tg.k !== 'fold' && G.tg.k !== 'rsz') { G.type = 'pan'; vp.classList.add('panning'); }
+  }
+  if (G.type === 'drag') {
+    const z = S.V.z;
+    for (const it of G.items) { it.n.x = Math.round(it.x + dx / z); it.n.y = Math.round(it.y + dy / z); const el = nodeEls.get(it.n.id); if (el) { el.style.left = it.n.x + 'px'; el.style.top = it.n.y + 'px'; } }
+    renderEdgesSoon();
+  } else if (G.type === 'pan') { S.V.x = G.V0.x + dx; S.V.y = G.V0.y + dy; applyView(); }
+  else if (G.type === 'rsz') { const n = node(G.tg.id); n.image.w = Math.round(clamp(G.w0 + 2 * dx / S.V.z, 40, 1200)); const im = nodeEls.get(n.id)?.querySelector('img'); if (im) { im.style.width = n.image.w + 'px'; im.style.height = Math.round(n.image.w / n.image.ar) + 'px'; } measure(); renderEdgesSoon(); }
+});
+function endPtr(e, cancel){
+  if (!PTR.has(e.pointerId)) return;
+  PTR.delete(e.pointerId);
+  if (G?.type === 'pinch') { if (PTR.size < 2) G = PTR.size ? { type: 'dead' } : null; return; }
+  if (!G) return;
+  if (G.type === 'dead') { if (!PTR.size) G = null; return; }
+  const g = G; G = null; vp.classList.remove('panning');
+  if (g.type === 'drag') { const moved = g.items.some(it => it.n.x !== it.x || it.n.y !== it.y); if (moved) { render(); touch(); } else S.undo.pop(); updateUndo(); return; }
+  if (g.type === 'rsz') { render(); settle(g.tg.id); touch(); refreshSheet(); return; }
+  if (g.type === 'pending' && !cancel) onTap(g.tg, e);
+}
+vp.addEventListener('pointerup', e => endPtr(e, false));
+vp.addEventListener('pointercancel', e => endPtr(e, true));
+function startPinch(){
+  const [a, b] = [...PTR.values()];
+  if (G?.type === 'drag') { for (const it of G.items) { it.n.x = it.x; it.n.y = it.y; } render(); S.undo.pop(); }
+  G = { type: 'pinch', d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, V0: { ...S.V } };
+}
+function doPinch(){
+  const [a, b] = [...PTR.values()]; if (!b) return;
+  const d = Math.hypot(a.x - b.x, a.y - b.y), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, V0 = G.V0, r = vp.getBoundingClientRect();
+  const z = clamp(V0.z * d / G.d0, 0.1, 3);
+  const wx = (G.m0.x - r.left - V0.x) / V0.z, wy = (G.m0.y - r.top - V0.y) / V0.z;
+  S.V = { z, x: m.x - r.left - wx * z, y: m.y - r.top - wy * z }; applyView();
+}
+function onTap(tg, e){
+  const now = performance.now(), key = tg.k + ':' + (tg.id || ''), dbl = now - lastTap.t < 380 && lastTap.key === key && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 24;
+  lastTap = dbl ? { t: 0 } : { t: now, key, x: e.clientX, y: e.clientY };
+  if (tg.k === 'fold') return toggleFold(tg.id);
+  if (S.mode) {
+    const m = S.mode;
+    if (m.t === 'reparent' && (tg.k === 'n' || tg.k === 'bg')) { setMode(null); reparent(m.src, tg.k === 'n' ? tg.id : null); }
+    else if (m.t === 'link' && tg.k === 'n' && tg.id !== m.src) { setMode(null); addLink(m.src, tg.id); }
+    else if (tg.k === 'bg') setMode(null);
+    return;
+  }
+  if (tg.k === 'n') { if (S.sel?.t !== 'n' || S.sel.id !== tg.id) select({ t: 'n', id: tg.id }); if (dbl) startEdit(tg.id); }
+  else if (tg.k === 'l') { select({ t: 'l', id: tg.id }); if (dbl) editLinkLabel(tg.id); }
+  else if (tg.k === 'bg') { if (dbl) addFloating(toWorld(e.clientX, e.clientY), true); else if (S.sel) select(null); }
+}
+vp.addEventListener('wheel', e => {
+  e.preventDefault();
+  const mouseWheel = e.deltaMode === 1 || (e.deltaX === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 50);
+  if (e.ctrlKey || e.metaKey || mouseWheel) zoomAt(S.V.z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018) * (e.deltaMode === 1 ? 30 : 1)), e.clientX, e.clientY);
+  else { S.V.x -= e.deltaX; S.V.y -= e.deltaY; applyView(); }
+}, { passive: false });
+vp.addEventListener('contextmenu', e => e.preventDefault());
+['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault()));
+
+/* ---------------- キーボード（PC） ---------------- */
+document.addEventListener('keydown', e => {
+  if (!S.m || $('#editor').classList.contains('hidden') || document.querySelector('.scrim')) return;
+  const tag = e.target.tagName, inField = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); S.dirty = true; saveNow().then(() => toast('保存しました')); return; }
+  if (inField) return;
+  const id = S.sel?.t === 'n' ? S.sel.id : null;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  if (mod) return;
+  if (e.key === 'Escape') { if (S.mode) setMode(null); else select(null); return; }
+  if (e.key === 'Tab' && id) { e.preventDefault(); addChild(id); return; }
+  if (e.key === 'Enter' && id) { e.preventDefault(); id === S.m.rootId ? addChild(id) : addSibling(id); return; }
+  if (e.key === 'F2' && id) { e.preventDefault(); startEdit(id); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel) { e.preventDefault(); if (S.sel.t === 'n') deleteNode(id); else $('#bar [data-a=ldel]')?.click(); return; }
+  if (e.key === ' ' && id && S.T.kids(id).length) { e.preventDefault(); toggleFold(id); return; }
+  if (e.key.startsWith('Arrow')) { e.preventDefault(); return navArrow(e.key); }
+  if (id && e.key.length === 1 && !e.altKey) { startEdit(id); const t = nodeEls.get(id)?.querySelector('.txt'); if (t) { t.textContent = ''; } }
+});
+function navArrow(k){
+  const cur = S.sel?.t === 'n' ? node(S.sel.id) : node(S.m.rootId);
+  if (!S.sel) return select({ t: 'n', id: cur.id });
+  const dv = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[k];
+  let best = null, bs = Infinity;
+  for (const [id] of nodeEls) {
+    if (id === cur.id) continue; const n = node(id), dx = n.x - cur.x, dy = n.y - cur.y, along = dx * dv[0] + dy * dv[1]; if (along <= 0) continue;
+    const across = Math.abs(dx * dv[1] - dy * dv[0]), score = along + across * 2.2; if (score < bs) { bs = score; best = id; }
+  }
+  if (best) { select({ t: 'n', id: best }); ensureVisible(best); }
+}
+
+/* ---------------- 貼り付け / ドロップ ---------------- */
+document.addEventListener('paste', async e => {
+  if (!S.m || $('#editor').classList.contains('hidden')) return;
+  if (e.target.closest && (e.target.closest('textarea,input') || e.target.isContentEditable)) return;
+  const files = [...(e.clipboardData?.files || [])].filter(f => f.type.startsWith('image/'));
+  if (files.length) { e.preventDefault(); const pid = S.sel?.t === 'n' ? S.sel.id : null; for (const f of files) addImageNode(await processImage(f), viewCenter(), pid); return; }
+  const text = e.clipboardData?.getData('text/plain');
+  if (text && text.trim()) { e.preventDefault(); pasteOutline(text); }
+});
+function pasteOutline(text){
+  let src = text.replace(/\r\n?/g, '\n');
+  if (!/^\s*(#{1,6}\s|[-*+]\s|\d+[.)]\s)/m.test(src)) src = src.split('\n').filter(l => l.trim()).map(l => l.match(/^\s*/)[0] + '- ' + l.trim()).join('\n');
+  const p = parseMarkdown(src);
+  const parentId = S.sel?.t === 'n' ? S.sel.id : null;
+  const hasRootHeading = /^#\s/m.test(src);
+  const items = p.nodes.filter(n => n !== p.root || hasRootHeading);
+  if (!items.length) return;
+  checkpoint();
+  const map = new Map(), c0 = viewCenter(), tops = [];
+  for (const pn of items) {
+    const inner = pn.parent && map.has(pn.parent);
+    const par = inner ? map.get(pn.parent) : parentId;
+    const n = addNode({ parent: par, text: pn.text, note: pn.note || '', x: NaN, y: NaN, color: par && par !== S.m.rootId ? node(par).color : '' });
+    if (!par) { n.x = c0.x; n.y = c0.y + tops.length * 60; }
+    if (!inner) tops.push(n.id);
+    map.set(pn, n.id);
+  }
+  idx(); render(); placeNew();
+  for (const t of tops) autoLayout(t);
+  render(); for (const t of tops) relax(t); render(); touch(); toast(`${items.length} 個のノードを貼り付けました`);
+}
+let dragDepth = 0;
+document.addEventListener('dragenter', e => { if (e.dataTransfer?.types?.includes('Files')) { dragDepth++; $('#drop').classList.remove('hidden'); } });
+document.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('#drop').classList.add('hidden'); } });
+document.addEventListener('dragover', e => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
+document.addEventListener('drop', async e => {
+  if (!e.dataTransfer?.files?.length) return;
+  e.preventDefault(); dragDepth = 0; $('#drop').classList.add('hidden');
+  const files = [...e.dataTransfer.files];
+  if (S.m && !$('#editor').classList.contains('hidden')) {
+    const imgs = files.filter(f => f.type.startsWith('image/'));
+    const nEl = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains('node'));
+    let pt = toWorld(e.clientX, e.clientY);
+    for (const f of imgs) { addImageNode(await processImage(f), pt, nEl ? nEl.dataset.id : null); pt = { x: pt.x + 30, y: pt.y + 30 }; }
+    const mds = files.filter(f => /\.(md|markdown|txt)$/i.test(f.name));
+    if (mds.length) mergeMarkdown(await mds[0].text());
+    return;
+  }
+  importFiles(files);
+});
+
+/* ---------------- AI連携: Markdown の反映 ---------------- */
+async function mergeDialog(){
+  const v = await dialog({ title: 'AIの編集を取り込む', html: `<p>AIが返した Markdown を貼り付けてください。<code>&lt;!-- id:… --&gt;</code> が残っているノードは<b>位置・色・画像をそのまま</b>にして、文章だけ更新します。</p><small>新しいノードは近くに自動配置、消えたノードは削除されます（取り込み前に確認が出ます）。</small>`,
+    input: { multiline: true, rows: 12, placeholder: '# テーマ <!-- id:root -->\n- 項目 <!-- id:n1ab2 -->\n  - 新しい項目', select: false },
+    buttons: [{ label: 'キャンセル', value: null }, { label: '確認へ', value: '$input', primary: true }] });
+  if (v && v.trim()) mergeMarkdown(v);
+}
+async function mergeMarkdown(text){
+  const p = parseMarkdown(text), m = S.m, old = S.T.N;
+  const used = new Set(), idOf = new Map();
+  // 既存IDを優先で割り当て
+  for (const pn of p.nodes) if (pn.id && old.has(pn.id) && !used.has(pn.id)) { idOf.set(pn, pn.id); used.add(pn.id); }
+  if (!idOf.has(p.root)) { idOf.set(p.root, m.rootId); used.add(m.rootId); }
+  // IDが無いノードは、同じ親の下の同じテキストの既存ノードに合わせる
+  for (const pn of p.nodes) {
+    if (idOf.has(pn)) continue;
+    const parId = pn.parent ? idOf.get(pn.parent) : null;
+    const cand = m.nodes.find(n => !used.has(n.id) && n.text === pn.text && (n.parent ?? null) === (parId ?? null));
+    if (cand) { idOf.set(pn, cand.id); used.add(cand.id); } else { let id; do id = 'n' + rid(4); while (old.has(id) || used.has(id)); idOf.set(pn, id); used.add(id); }
+  }
+  let add = 0, chg = 0;
+  const nodes = p.nodes.map(pn => {
+    const id = idOf.get(pn), o = old.get(id), parent = pn === p.root ? null : pn.parent ? idOf.get(pn.parent) : null;
+    let image = o?.image;
+    if (pn.image && (!o?.image || o.image.file !== pn.image)) { const prev = m.nodes.find(n => n.image?.file === pn.image); if (prev) image = { ...prev.image }; }
+    if (!o) add++; else if (o.text !== pn.text || (o.note || '') !== (pn.note || '') || (o.parent ?? null) !== parent) chg++;
+    return { id, parent, text: pn.text, note: pn.note || '', x: o ? o.x : NaN, y: o ? o.y : NaN, color: o?.color || '', ...(image ? { image } : {}), ...(o?.collapsed ? { collapsed: true } : {}) };
+  });
+  const keep = new Set(nodes.map(n => n.id)), del = m.nodes.filter(n => !keep.has(n.id));
+  const linkOut = [];
+  const byText = t => nodes.find(n => n.text === t)?.id;
+  for (const l of p.links) {
+    const from = (l.from && keep.has(l.from) && l.from) || byText(l.fromText), to = (l.to && keep.has(l.to) && l.to) || byText(l.toText);
+    if (from && to && from !== to) { const ex = m.links.find(k => k.from === from && k.to === to); linkOut.push({ id: ex?.id || 'l' + rid(), from, to, label: l.label || '' }); }
+  }
+  const ok = await confirmDlg('取り込みの確認', `<p>追加 <b>${add}</b> ・ 変更 <b>${chg}</b> ・ 削除 <b>${del.length}</b> ・ 関連線 <b>${linkOut.length}</b></p>${del.length ? `<small>削除: ${esc(del.slice(0, 8).map(n => n.text || '（空）').join('、'))}${del.length > 8 ? ' ほか' : ''}</small>` : ''}<br><small>あとから「元に戻す」で取り消せます。</small>`, '取り込む');
+  if (!ok) return;
+  checkpoint();
+  m.nodes = nodes; m.links = linkOut; idx();
+  render(); placeNew(); render(); for (const n of S.m.nodes) if (!old.has(n.id)) relax(n.id); render(); touch(); select(null); toast('取り込みました');
+}
+function placeNew(){
+  const T = S.T, order = [];
+  const st = T.kids(null).slice().reverse(); while (st.length) { const id = st.pop(); order.push(id); st.push(...T.kids(id).slice().reverse()); }
+  const placed = id => !isNaN(node(id).x);
+  const r = node(S.m.rootId); if (!placed(r.id)) { r.x = 0; r.y = 0; }
+  let floatY = null;
+  for (const id of order) {
+    const n = node(id); if (placed(id)) continue;
+    if (!n.parent) {
+      if (floatY == null) { floatY = -Infinity; for (const o of S.m.nodes) if (placed(o.id)) floatY = Math.max(floatY, o.y + sz(o.id).h / 2); floatY += 80; }
+      n.x = r.x; n.y = floatY; floatY += 60; continue;
+    }
+    const p = node(n.parent), dir = n.parent === S.m.rootId ? childSide(n.parent) : sideOf(p) || 1;
+    const sib = T.kids(n.parent).filter(k => k !== id && placed(k) && Math.sign(node(k).x - p.x || 1) === dir);
+    if (sib.length) { const last = sib.reduce((a, k) => subtreeBottom(k) > subtreeBottom(a) ? k : a); n.x = node(last).x; n.y = subtreeBottom(last) + 14 + sz(id).h / 2; }
+    else { n.x = p.x + dir * (sz(p.id).w / 2 + 56 + sz(id).w / 2); n.y = p.y; }
+  }
+}
+
+/* ---------------- 読み込み / 書き出し ---------------- */
+async function exportZip(dirs){
+  const files = [{ name: 'maps/README.md', data: README_MD }];
+  const list = [];
+  for (const dir of dirs) {
+    if (S.m && S.dir === dir) await saveNow();
+    const m = normalize(await S.backend.load(dir));
+    files.push({ name: `maps/${dir}/map.json`, data: toJson(m) }, { name: `maps/${dir}/map.md`, data: toMarkdown(m) });
+    for (const n of m.nodes) if (n.image) { const b = (S.dir === dir && S.img.get(n.image.file)?.blob) || await S.backend.readImage(dir, n.image.file); if (b) files.push({ name: `maps/${dir}/images/${n.image.file}`, data: b }); }
+    list.push({ dir, title: m.title, updated: m.updated, count: m.nodes.length });
+  }
+  files.push({ name: 'maps/index.md', data: buildIndex(list) });
+  const d = new Date(), name = dirs.length === 1 ? `${dirs[0]}.zip` : `mindmaps_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.zip`;
+  const ok = await shareOrDownload(name, await makeZip(files));
+  if (ok && S.backend?.kind === 'browser' && dirs.length === S.list.length) { LS.set('lastBackup', Date.now()); if (!S.m) showHome(false); }
+}
+function importDialog(){
+  dialog({ title: '読み込み', html: `
+    <button class="opt" data-k="file">${icon('up')}<div><b>ファイルから</b><span>ZIP（書き出したもの）、map.json、Markdown（.md / .txt）に対応。複数選択できます。</span></div></button>
+    <button class="opt" data-k="paste">${icon('paste')}<div><b>テキストを貼り付けて作成</b><span>AIに作ってもらった箇条書きや Markdown をそのままマップにします。</span></div></button>`,
+    buttons: [{ label: '閉じる', value: null }],
+    onBuild: (dlg, done) => dlg.querySelectorAll('button.opt').forEach(b => b.onclick = () => { done(null); b.dataset.k === 'file' ? (($('#fImport').value = ''), $('#fImport').click()) : pasteNewDialog(); }) });
+}
+$('#fImport').onchange = () => importFiles([...$('#fImport').files]);
+async function pasteNewDialog(){
+  const v = await dialog({ title: 'テキストからマップを作成', html: '<small>1行目を <code># テーマ</code> にすると中心ノードになります。インデントした箇条書きが階層になります。</small>',
+    input: { multiline: true, rows: 12, placeholder: '# 新規事業アイデア\n- 市場\n  - 若者向け\n  - シニア向け\n- 収益モデル', select: false },
+    buttons: [{ label: 'キャンセル', value: null }, { label: '作成', value: '$input', primary: true }] });
+  if (v && v.trim()) { const dir = await importMarkdown(v, null); if (dir) openMap(dir, { layout: true }); }
+}
+async function importMarkdown(text, fname){
+  const p = parseMarkdown(text), m = newMap(p.title || (fname || '').replace(/\.\w+$/, '') || '読み込んだマップ');
+  m.nodes = []; const used = new Set(), idOf = new Map();
+  for (const pn of p.nodes) { let id = pn === p.root ? 'root' : (pn.id && !used.has(pn.id) && pn.id !== 'root' ? pn.id : null); while (!id || used.has(id)) id = 'n' + rid(4); used.add(id); idOf.set(pn, id); }
+  for (const pn of p.nodes) m.nodes.push({ id: idOf.get(pn), parent: pn === p.root ? null : pn.parent ? idOf.get(pn.parent) : null, text: pn.text, note: pn.note || '', x: 0, y: 0, color: '' });
+  m.rootId = 'root';
+  const N = new Map(m.nodes.map(n => [n.id, n]));
+  for (const l of p.links) { const f = (l.from && N.has(l.from) && l.from) || m.nodes.find(n => n.text === l.fromText)?.id, t = (l.to && N.has(l.to) && l.to) || m.nodes.find(n => n.text === l.toText)?.id; if (f && t && f !== t) m.links.push({ id: 'l' + rid(), from: f, to: t, label: l.label }); }
+  m.title = N.get('root').text;
+  const rootKids = m.nodes.filter(n => n.parent === 'root');
+  rootKids.forEach((n, i) => n.color = COLORS[1 + (i % (COLORS.length - 2))][0]);
+  // 子に色を継承
+  const byP = new Map(); m.nodes.forEach(n => { if (!byP.has(n.parent)) byP.set(n.parent, []); byP.get(n.parent).push(n); });
+  const paint = (id, c) => (byP.get(id) || []).forEach(n => { n.color = c; paint(n.id, c); }); rootKids.forEach(n => paint(n.id, n.color));
+  const d = new Date(), dir = await uniqueDir(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${safeDirName(m.title)}`);
+  // 仮配置（開いたときに実サイズで整列）
+  m.nodes.forEach((n, i) => { n.x = 0; n.y = i * 50; });
+  await S.backend.writeMap(dir, toJson(m), toMarkdown(m));
+  S.list.push({ dir, id: m.id, title: m.title, updated: m.updated, count: m.nodes.length });
+  return dir;
+}
+async function importFiles(files){
+  let last = null, n = 0, mdDir = null;
+  try {
+    for (const f of files) {
+      const head = new Uint8Array(await f.slice(0, 4).arrayBuffer());
+      if (/\.html?$/i.test(f.name) || f.type === 'text/html') {
+        const d = parseSharedHtml(await f.text());
+        if (!d) { toast(`${f.name}: マップのデータが入っていません`, 4000); continue; }
+        const dir = await importShared(d); if (dir) { last = dir; n++; }
+        continue;
+      }
+      if (/\.zip$/i.test(f.name) || f.type === 'application/zip' || (head[0] === 0x50 && head[1] === 0x4b && head[2] === 3 && head[3] === 4)) {
+        const ents = await readZip(f), byDir = new Map();
+        for (const e of ents) { const m = e.name.match(/^(?:.*\/)?([^/]+)\/map\.json$/) || (e.name === 'map.json' ? [0, f.name.replace(/\.zip$/i, '')] : null); if (m && !/(^|\/)_trash\//.test(e.name)) byDir.set(e.name.slice(0, e.name.length - 'map.json'.length), m[1]); }
+        for (const [prefix, dirName] of byDir) {
+          const mj = ents.find(e => e.name === prefix + 'map.json'); const m = normalize(JSON.parse(new TextDecoder().decode(mj.data)));
+          if (S.list.some(x => x.id === m.id)) m.id = 'm' + rid(8);
+          const dir = await uniqueDir(safeDirName(dirName));
+          for (const e of ents) if (e.name.startsWith(prefix + 'images/')) await S.backend.writeImage(dir, e.name.slice((prefix + 'images/').length), new Blob([e.data], { type: /\.webp$/i.test(e.name) ? 'image/webp' : /\.png$/i.test(e.name) ? 'image/png' : /\.gif$/i.test(e.name) ? 'image/gif' : /\.svg$/i.test(e.name) ? 'image/svg+xml' : 'image/jpeg' }));
+          await S.backend.writeMap(dir, toJson(m), toMarkdown(m));
+          S.list.push({ dir, id: m.id, title: m.title, updated: m.updated, count: m.nodes.length }); last = dir; n++;
+        }
+        if (!byDir.size) toast(`${f.name}: map.json が見つかりません`, 4000);
+      } else if (/\.json$/i.test(f.name)) {
+        const m = normalize(JSON.parse(await f.text())); m.nodes.forEach(x => delete x.image); if (S.list.some(x => x.id === m.id)) m.id = 'm' + rid(8);
+        const dir = await uniqueDir(safeDirName(m.title));
+        await S.backend.writeMap(dir, toJson(m), toMarkdown(m));
+        S.list.push({ dir, id: m.id, title: m.title, updated: m.updated, count: m.nodes.length }); last = dir; n++;
+      } else if (/\.(md|markdown|txt)$/i.test(f.name) || f.type.startsWith('text/')) {
+        mdDir = last = await importMarkdown(await f.text(), f.name); n++;
+      }
+    }
+  } catch (e) { console.error(e); toast('読み込めませんでした: ' + e.message, 5000); }
+  if (n === 1 && last) openMap(last, { layout: last === mdDir });
+  else { if (n) toast(`${n} 件読み込みました`); showHome(true); }
+}
+
+/* ---------------- 共有ファイル（1ファイルで 閲覧・編集・AI） ----------------
+   書き出すHTMLの中身:
+     #mmPreview   … 全体図(PNG)＋箇条書き。JavaScriptが動かない環境（iPhoneのファイルプレビュー等）でもこれが見える
+     #mmData      … マップ本体と画像（JSON）
+     #mmMd        … AI向けMarkdown
+     （以降）       … このエディタ本体。JSが動く環境ではそのまま編集画面になる */
+const SHARE_FORMAT = 'mindmap-share/1';
+const SCRIPT_END = '<' + '/script';
+const FONT_STACK = getComputedStyle(document.documentElement).getPropertyValue('--font') || 'sans-serif';
+function blobToDataUrl(b){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+function dataUrlToBlob(u){
+  const m = String(u).match(/^data:([^;,]*)(;base64)?,(.*)$/s); if (!m) return null;
+  if (!m[2]) return new Blob([decodeURIComponent(m[3])], { type: m[1] });
+  const bin = atob(m[3]), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new Blob([a], { type: m[1] || 'application/octet-stream' });
+}
+function b64url(u8){ let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64urlDecode(s){ s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
+async function packMap(m){ const s = new Blob([JSON.stringify({ format: SHARE_FORMAT, map: m, images: {} })]).stream().pipeThrough(new CompressionStream('deflate-raw')); return b64url(new Uint8Array(await new Response(s).arrayBuffer())); }
+async function unpackMap(str){ const s = new Blob([b64urlDecode(str)]).stream().pipeThrough(new DecompressionStream('deflate-raw')); return JSON.parse(await new Response(s).text()); }
+
+// 編集用アプリのURL（スマホの相手が編集するときに開く場所）
+function getAppUrl(){
+  if (location.protocol === 'https:' && !S.fileMode) { const u = location.origin + location.pathname.replace(/[^/]*$/, '') + 'mindmap.html'; LS.set('appUrl', u); return u; }
+  return S.sharedApp || LS.get('appUrl', '');
+}
+async function appUrlDialog(){
+  const v = await promptDlg('編集用アプリのURL', getAppUrl(), '<p>共有ファイルの「スマホで編集する」ボタンの行き先です。GitHub Pages などに置いたアプリのURL（例: <code>https://ユーザー名.github.io/mindmap/</code>）を入れてください。</p><small>空にすると、スマホの相手は閲覧のみになります（PCの相手はそのまま編集できます）。</small>');
+  if (v == null) return;
+  let u = v.trim(); if (u && !/^https:\/\//.test(u)) return toast('https:// から始まるURLを入れてください', 3500);
+  if (u && !/\.html?$/.test(u)) u = u.replace(/\/?$/, '/') + 'mindmap.html';
+  LS.set('appUrl', u); S.sharedApp = u; toast(u ? '設定しました' : 'URLを消しました');
+}
+
+/* 全体図をPNGに描く（画面に出ているノードをそのまま描画） */
+function hexMix(hex, a){ const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, m = c => Math.round(c * a + 255 * (1 - a)); return `rgb(${m(r)},${m(g)},${m(b)})`; }
+function wrapLines(g, text, maxW){
+  const out = [];
+  for (const para of String(text).split('\n')) {
+    let line = '';
+    for (const ch of para) { if (line && g.measureText(line + ch).width > maxW) { out.push(line); line = ch.trimStart(); } else line += ch; }
+    out.push(line);
+  }
+  return out;
+}
+function roundRectPath(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+async function renderMapPNG(maxDim = 1800){
+  render(); measure();
+  const ids = [...nodeEls.keys()]; if (!ids.length) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const id of ids) { const n = node(id), s = sz(id); x0 = Math.min(x0, n.x - s.w / 2); x1 = Math.max(x1, n.x + s.w / 2); y0 = Math.min(y0, n.y - s.h / 2); y1 = Math.max(y1, n.y + s.h / 2); }
+  for (const t of $('#eg').querySelectorAll('text')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'); x0 = Math.min(x0, x - 60); x1 = Math.max(x1, x + 60); y0 = Math.min(y0, y - 10); y1 = Math.max(y1, y + 10); }
+  const pad = 28, bw = x1 - x0 + pad * 2, bh = y1 - y0 + pad * 2;
+  const k = Math.min(2, maxDim / Math.max(bw, bh));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(bw * k)); c.height = Math.max(1, Math.ceil(bh * k));
+  const g = c.getContext('2d'); g.scale(k, k); g.translate(pad - x0, pad - y0);
+  g.fillStyle = '#fbfaf7'; g.fillRect(x0 - pad, y0 - pad, bw, bh);
+  g.lineCap = 'round';
+  for (const p of $('#eg').querySelectorAll('path.e, path.x')) {
+    const d = p.getAttribute('d'), cross = p.classList.contains('x');
+    g.save(); g.lineWidth = 2; g.strokeStyle = cross ? '#c2410c' : (p.style.stroke || '#a19e95'); if (cross) g.setLineDash([6, 5]);
+    g.stroke(new Path2D(d)); g.restore();
+    if (cross) { const v = d.match(/-?[\d.]+/g).map(Number); if (v.length >= 6) { const [cx, cy, ex, ey] = v.slice(-4), a = Math.atan2(ey - cy, ex - cx);
+      g.fillStyle = '#c2410c'; g.beginPath(); g.moveTo(ex, ey); g.lineTo(ex - 10 * Math.cos(a - 0.4), ey - 10 * Math.sin(a - 0.4)); g.lineTo(ex - 10 * Math.cos(a + 0.4), ey - 10 * Math.sin(a + 0.4)); g.closePath(); g.fill(); } }
+  }
+  for (const t of $('#eg').querySelectorAll('text')) {
+    g.font = `12px ${FONT_STACK}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 4; g.strokeStyle = '#fbfaf7'; g.fillStyle = '#c2410c';
+    g.strokeText(t.textContent, +t.getAttribute('x'), +t.getAttribute('y')); g.fillText(t.textContent, +t.getAttribute('x'), +t.getAttribute('y'));
+  }
+  for (const id of ids) {
+    const n = node(id), el = nodeEls.get(id), w = el.offsetWidth, h = el.offsetHeight, x = n.x - w / 2, y = n.y - h / 2, isRoot = id === S.m.rootId;
+    const col = n.color ? COLOR_HEX[n.color] : '#cfccc3';
+    roundRectPath(g, x, y, w, h, 12); g.fillStyle = n.color ? hexMix(col, 0.13) : '#ffffff'; g.fill();
+    g.lineWidth = isRoot ? 2 : 1.5; g.strokeStyle = n.color ? col : (isRoot ? '#b9b6ad' : '#cfccc3'); if (!n.parent && !isRoot) g.setLineDash([5, 4]); g.stroke(); g.setLineDash([]);
+    const bx = x + el.clientLeft, by = y + el.clientTop;
+    const im = el.querySelector('img');
+    if (im && im.complete && im.naturalWidth) { g.save(); roundRectPath(g, bx + im.offsetLeft, by + im.offsetTop, im.offsetWidth, im.offsetHeight, 8); g.clip();
+      try { g.drawImage(im, bx + im.offsetLeft, by + im.offsetTop, im.offsetWidth, im.offsetHeight); } catch {} g.restore(); }
+    const t = el.querySelector('.txt');
+    if (n.text && t && t.offsetWidth) {
+      const fs = isRoot ? 18 : 14, lh = fs * 1.45; g.font = `${isRoot ? 700 : 400} ${fs}px ${FONT_STACK}`; g.fillStyle = '#1e1e1c'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      let ty = by + t.offsetTop + lh / 2;
+      for (const ln of wrapLines(g, n.text, t.offsetWidth + 1)) { g.fillText(ln, bx + t.offsetLeft + t.offsetWidth / 2, ty); ty += lh; }
+    }
+  }
+  return new Promise(r => c.toBlob(r, 'image/png'));
+}
+
+/* 共有HTMLを作る */
+function outlineHtml(m){
+  const T = mapTools(m);
+  const li = id => { const n = T.N.get(id), ks = T.kids(id);
+    return `<li>${esc(n.text || (n.image ? '（画像）' : '（空）'))}${n.note ? `<div class="note">${esc(n.note)}</div>` : ''}${ks.length ? `<ul>${ks.map(li).join('')}</ul>` : ''}</li>`; };
+  const floats = T.kids(null).filter(id => id !== m.rootId);
+  let h = `<ul>${li(m.rootId)}</ul>`;
+  if (floats.length) h += `<h3>独立ノード</h3><ul>${floats.map(li).join('')}</ul>`;
+  if (m.links.length) h += `<h3>関連</h3><ul>${m.links.map(k => `<li>${esc(T.N.get(k.from)?.text || '')} → ${esc(T.N.get(k.to)?.text || '')}${k.label ? '：' + esc(k.label) : ''}</li>`).join('')}</ul>`;
+  return h;
+}
+const FILE_CSS = `html,body{overflow:auto!important;height:auto!important}
+body>.screen,#toast,#drop{display:none!important}
+#mmPreview{max-width:900px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px;line-height:1.6}
+#mmPreview .kicker{font-size:12px;color:var(--muted);letter-spacing:.04em}
+#mmPreview h1{font-size:22px;margin:2px 0 4px}
+#mmPreview .meta{color:var(--muted);font-size:13px}
+#mmPreview a.edit{display:block;text-align:center;background:var(--accent);color:var(--accent-ink);padding:14px;border-radius:12px;text-decoration:none;font-weight:700;margin:14px 0 8px}
+#mmPreview .how{font-size:13px;color:var(--muted);background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0 14px}
+#mmPreview img.map{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:12px;background:#fbfaf7}
+#mmPreview h2{font-size:16px;margin:20px 0 6px}#mmPreview h3{font-size:14px;margin:14px 0 4px}
+#mmPreview ul{padding-left:1.25em;margin:4px 0}#mmPreview li{margin:2px 0}
+#mmPreview .note{color:var(--muted);font-size:13px;white-space:pre-wrap}`;
+const PRISTINE = __PRISTINE;  // 起動時点のこのページ（エディタ本体）の複製
+async function buildSharedHtml(){
+  if (S.editing) commitEdit();
+  await saveNow();
+  const m = JSON.parse(toJson(S.m)), images = {};
+  for (const n of m.nodes) if (n.image && !images[n.image.file]) { const b = S.img.get(n.image.file)?.blob; if (b) images[n.image.file] = await blobToDataUrl(b); }
+  const app = getAppUrl();
+  const png = await renderMapPNG(1800), pngUrl = png ? await blobToDataUrl(png) : '';
+  let editHref = '';
+  if (app) {
+    if (!Object.keys(images).length) { try { const p = await packMap(m); if (p.length < 60000) editHref = app + '#import=' + p; } catch {} }
+    if (!editHref) editHref = app + '#open-file';
+  }
+  const doc = PRISTINE.cloneNode(true);
+  doc.querySelectorAll('#mmPreview,#mmData,#mmMd,#mmFileStyle,link[rel=manifest]').forEach(e => e.remove());
+  doc.querySelector('title').textContent = `${m.title}（マインドマップ）`;
+  const st = document.createElement('style'); st.id = 'mmFileStyle'; st.textContent = FILE_CSS; doc.querySelector('head').append(st);
+  const body = doc.querySelector('body');
+  const pv = document.createElement('div'); pv.id = 'mmPreview';
+  pv.innerHTML = `<div class="kicker">共有されたマインドマップ</div><h1>${esc(m.title)}</h1><div class="meta">更新 ${esc(fmtDate(m.updated))} ・ ${m.nodes.length}ノード</div>
+    ${editHref ? `<a class="edit" href="${esc(editHref)}">このマップを編集する</a>` : ''}
+    <div class="how">${editHref
+      ? (editHref.includes('#import=') ? 'スマホは上のボタンで編集画面が開きます。' : 'スマホは上のボタンでアプリを開き、「ファイルを選ぶ」からこのファイルを選ぶと編集できます。')
+      : 'スマホではこの画面で内容を確認できます。'} PCではこのファイルをブラウザ（Chrome・Edge・Safari）で開くと、そのまま編集できます。編集後は右上の「共有」から送り返してください。</div>
+    ${pngUrl ? `<img class="map" alt="マップ全体図" src="${pngUrl}">` : ''}
+    <h2>内容</h2>${outlineHtml(m)}`;
+  const data = document.createElement('script'); data.type = 'application/json'; data.id = 'mmData';
+  data.textContent = JSON.stringify({ format: SHARE_FORMAT, exported: nowIso(), app, map: m, images }).replace(/</g, '\\u003c');
+  const md = document.createElement('script'); md.type = 'text/markdown'; md.id = 'mmMd';
+  md.textContent = '\n' + toMarkdown(m).split(SCRIPT_END).join('<\\/script');
+  body.prepend(pv, data, md);
+  return '<!doctype html>\n' + doc.outerHTML;
+}
+function shareFileName(ext){ return `${safeDirName(S.m.title)}.${ext}`; }
+async function shareDialog(){
+  const app = getAppUrl();
+  dialog({ title: '共有', html: `
+    <button class="opt" data-k="file">${icon('share')}<div><b>ファイルで共有（相手も編集できる）</b><span>1つのファイルに全部入ります。スマホで開くと全体図と内容が見られ、${app ? 'ボタンから編集もできます' : 'PCではそのまま編集できます'}。送り返されたら「読み込み」で取り込めます。</span></div></button>
+    <button class="opt" data-k="png">${icon('image')}<div><b>画像で共有（見るだけ）</b><span>全体図をPNG画像にします。LINEなどでサッと見せたいときに。</span></div></button>
+    <button class="opt" data-k="ai">${icon('ai')}<div><b>AI用にMarkdownをコピー</b><span>AIのチャットに貼り付けて相談できます。</span></div></button>
+    ${app ? '' : `<p style="margin-top:6px"><small>スマホの相手にも編集してもらうには、<a href="#" data-k="url">編集用アプリのURL</a>を設定してください（未設定だとスマホの相手は閲覧のみ）。</small></p>`}`,
+    buttons: [{ label: '閉じる', value: null }],
+    onBuild: (dlg, done) => dlg.querySelectorAll('[data-k]').forEach(b => b.onclick = async ev => {
+      ev.preventDefault(); done(null);
+      const k = b.dataset.k;
+      if (k === 'ai') return $('#eAI').click();
+      if (k === 'url') return appUrlDialog();
+      toast('作成中…', 1200);
+      try {
+        if (k === 'png') { const p = await renderMapPNG(2400); if (p) await shareOrDownload(shareFileName('png'), p, true); }
+        else { const html = await buildSharedHtml(); if (await shareOrDownload(shareFileName('html'), new Blob([html], { type: 'text/html' }), true)) S.fileChanged = false; }
+      } catch (e) { console.error(e); toast('作成できませんでした: ' + e.message, 4000); }
+    }) });
+}
+
+/* 受け取ったファイルの取り込み */
+function parseSharedHtml(text){
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  const el = doc.getElementById('mmData'); if (!el) return null;
+  const d = JSON.parse(el.textContent); return d && d.map ? d : null;
+}
+async function importShared(data){
+  const m = normalize(data.map);
+  if (data.app && !LS.get('appUrl', '')) LS.set('appUrl', data.app);
+  const ex = S.list.find(x => x.id && x.id === m.id);
+  let dir = null;
+  if (ex) {
+    const v = await dialog({ title: '同じマップがあります', html: `<p>「${esc(ex.title)}」の別バージョンです（あなたの版: ${esc(fmtDate(ex.updated))} ／ 受け取った版: ${esc(fmtDate(m.updated))}）。</p><small>上書きしても「元に戻す」はできません。迷ったら「別のマップとして追加」で両方残せます。</small>`,
+      buttons: [{ label: 'キャンセル', value: null }, { label: '別のマップとして追加', value: 'new' }, { label: '上書きして更新', value: 'over', primary: true }] });
+    if (!v) return null;
+    if (v === 'over') dir = ex.dir; else { m.id = 'm' + rid(8); m.title = m.title; }
+  }
+  if (!dir) { const d = new Date(); dir = await uniqueDir(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${safeDirName(m.title)}`); }
+  for (const [f, u] of Object.entries(data.images || {})) { const b = dataUrlToBlob(u); if (b) await S.backend.writeImage(dir, f, b); }
+  await S.backend.writeMap(dir, toJson(m), toMarkdown(m));
+  const it = S.list.find(x => x.dir === dir), row = { dir, id: m.id, title: m.title, updated: m.updated, count: m.nodes.length };
+  if (it) Object.assign(it, row); else S.list.push(row);
+  writeIndexSoon();
+  return dir;
+}
+function openFileDialog(){
+  dialog({ title: '受け取ったファイルを開く', html: '<p>LINEやメールで受け取ったマップのファイル（.html）を選んでください。</p><small>iPhoneは、先に受け取ったファイルを「"ファイル"に保存」しておくと選べます。</small>',
+    buttons: [{ label: 'キャンセル', value: null }, { label: 'ファイルを選ぶ', value: true, primary: true }],
+    onBuild: (dlg, done) => { dlg.querySelector('.btn.primary').onclick = () => { done(null); $('#fImport').value = ''; $('#fImport').click(); }; } });
+}
+
+/* 共有ファイルを直接開いたとき（PCなど、JSが動く環境）：そのファイルの中だけで編集する */
+class MemoryBackend {
+  kind = 'memory'; label = 'この共有ファイルの中';
+  maps = new Map(); imgs = new Map();
+  async list(){ return [...this.maps].map(([dir, v]) => { const m = JSON.parse(v.json); return { dir, id: m.id, title: m.title, updated: m.updated, count: m.nodes.length }; }); }
+  async load(dir){ return JSON.parse(this.maps.get(dir).json); }
+  async readImage(dir, f){ return this.imgs.get(dir + '/' + f) || null; }
+  async writeMap(dir, json, md){ this.maps.set(dir, { json, md }); if (S.fileMode && S.m) S.fileChanged = true; }
+  async writeImage(dir, f, b){ this.imgs.set(dir + '/' + f, b); }
+  async deleteImage(dir, f){ this.imgs.delete(dir + '/' + f); }
+  async deleteMap(dir){ this.maps.delete(dir); }
+  async rename(a, b){ this.maps.set(b, this.maps.get(a)); this.maps.delete(a); }
+  async writeRoot(){}
+}
+async function bootFileMode(emb){
+  let data; try { data = JSON.parse(emb.textContent); } catch { return false; }
+  document.getElementById('mmFileStyle')?.remove(); document.getElementById('mmPreview')?.remove();
+  S.fileMode = true; S.sharedApp = data.app || ''; S.backend = new MemoryBackend();
+  const m = normalize(data.map), dir = safeDirName(m.title);
+  for (const [f, u] of Object.entries(data.images || {})) { const b = dataUrlToBlob(u); if (b) await S.backend.writeImage(dir, f, b); }
+  await S.backend.writeMap(dir, toJson(m), toMarkdown(m));
+  S.list = await S.backend.list();
+  $('#hNew').classList.add('hidden'); $('#hImport').classList.add('hidden');
+  await openMap(dir); S.fileChanged = false;
+  toast('共有されたマップです。編集したら右上の「共有」から送り返せます', 4200);
+  return true;
+}
+// 共有ファイルの中のマップを、自分の保存先（アプリ側）にコピー
+async function saveSharedToMine(){
+  let target = null;
+  try { const h = await kvGet('dirHandle'); if (h && (await h.queryPermission?.({ mode: 'readwrite' })) === 'granted') target = new FolderBackend(await mapsDir(h), h.name); } catch {}
+  if (!target) target = new BrowserBackend();
+  const it = S.list[0]; if (!it) return;
+  if (S.m) await saveNow();
+  const have = new Set((await target.list().catch(() => [])).map(x => x.dir));
+  let d = it.dir, i = 2; while (have.has(d)) d = `${it.dir} (${i++})`;
+  await copyMap(S.backend, it.dir, target, d);
+  toast(`${target.label} に保存しました（mindmap.html から開けます）`, 4000);
+}
+
+/* ---------------- ボタン配線 ---------------- */
+function setupStaticIcons(){
+  $('#hNew').innerHTML = icon('plus') + '新規<span class="lg">作成</span>'; $('#hImport').innerHTML = icon('up') + '<span>読み込み</span>'; $('#hImport').title = '読み込み'; $('#hMore').innerHTML = icon('more');
+  $('#eBack').innerHTML = icon('back'); $('#eUndo').innerHTML = icon('undo'); $('#eRedo').innerHTML = icon('redo'); $('#eMore').innerHTML = icon('more');
+  $('#eAI').innerHTML = icon('ai'); $('#eShare').innerHTML = icon('share');
+  $('#zIn').innerHTML = icon('zin'); $('#zOut').innerHTML = icon('zout'); $('#zFit').innerHTML = icon('fit');
+}
+$('#hNew').onclick = createMap;
+$('#hImport').onclick = importDialog;
+$('#hMore').onclick = e => openMenu(e.currentTarget, [
+  { label: 'すべてZIPで書き出し', icon: 'down', run: () => S.list.length ? exportZip(S.list.map(x => x.dir)) : toast('マップがありません') },
+  { label: '保存先を変更', icon: 'folder', run: storageDialog, hidden: S.fileMode },
+  { label: '受け取ったファイルを開く', icon: 'up', run: openFileDialog, hidden: S.fileMode },
+  { label: '共有ファイルに入れる編集用URL', icon: 'link', run: appUrlDialog },
+  '-',
+  { label: 'AI向け書式の説明をコピー', icon: 'copy', run: async () => { if (await copyText(README_MD)) toast('コピーしました'); } },
+]);
+$('#eBack').onclick = () => showHome(false);
+$('#eUndo').onclick = undo; $('#eRedo').onclick = redo;
+$('#eShare').onclick = shareDialog;
+$('#zIn').onclick = () => zoomBy(1.25); $('#zOut').onclick = () => zoomBy(0.8); $('#zFit').onclick = fit;
+$('#eAI').onclick = async () => { await saveNow(); if (await copyText(toMarkdown(S.m))) toast('AI用Markdownをコピーしました。AIのチャットに貼り付けてください', 3200); };
+$('#eMore').onclick = e => openMenu(e.currentTarget, [
+  { label: 'AI用にMarkdownをコピー', icon: 'copy', run: () => $('#eAI').click() },
+  { label: 'AIの編集を取り込む', icon: 'ai', run: mergeDialog },
+  '-',
+  { label: '共有（ファイル・画像）', icon: 'share', run: shareDialog },
+  { label: 'Markdownファイルで書き出し', icon: 'down', run: () => shareOrDownload(`${S.dir}.md`, new Blob([toMarkdown(S.m)], { type: 'text/markdown' })) },
+  { label: 'ZIPで書き出し（画像込み）', icon: 'down', run: () => exportZip([S.dir]) },
+  '-',
+  { label: '全体を自動整列', icon: 'layout', run: () => { checkpoint(); autoLayout(null); render(); fit(); touch(); } },
+  { label: '左右にバランスよく整列', icon: 'layout', run: () => { checkpoint(); autoLayout(null, true); render(); fit(); touch(); } },
+  { label: '全体を表示', icon: 'fit', run: fit },
+  { label: 'ドラッグ時に子も一緒に動かす', checked: S.withKids, run: () => { S.withKids = !S.withKids; LS.set('withKids', S.withKids); toast(S.withKids ? '子も一緒に動かします（Alt+ドラッグで単独）' : '単独で動かします（Alt+ドラッグで子も一緒）'); } },
+  '-',
+  { label: '操作のヘルプ', icon: 'note', run: helpDialog },
+]);
+function helpDialog(){
+  dialog({ title: '操作のヘルプ', html: `
+  <p><b>スマホ</b>：（初回はブラウザのメニューから「ホーム画面に追加」するとアプリのように使えます）タップで選択／ドラッグで移動／空白ドラッグで画面移動／2本指でズーム／ダブルタップで文字編集／空白ダブルタップで独立ノード作成。下のバーから子・兄弟・画像・付け替え・関連線。</p>
+  <p><b>PC</b>：<code>Tab</code> 子を追加 ・ <code>Enter</code> 兄弟を追加 ・ <code>F2</code> か文字入力で編集 ・ <code>Delete</code> 削除 ・ <code>Space</code> 折りたたみ ・ 矢印キーで移動 ・ <code>Ctrl+Z</code> 元に戻す ・ <code>Ctrl+S</code> 保存 ・ ホイールでズーム ・ <code>Alt</code>+ドラッグで単独移動</p>
+  <p><b>画像</b>：画像ボタン、貼り付け（Ctrl+V）、ファイルをドラッグ＆ドロップ。選択中ノードの右下の丸をドラッグでサイズ変更。</p>
+  <p><b>テキスト貼り付け</b>：ノードを選んで箇条書きを Ctrl+V すると、子ノードとしてまとめて追加。</p>
+  <p><b>共有</b>：右上の共有ボタン →「ファイルで共有」で1ファイルにまとめて送れます。スマホの相手は全体図と内容を見られ、ボタンから編集も可能。PCの相手は開けばそのまま編集できます。送り返されたファイルは「読み込み」で取り込み、同じマップなら上書き更新できます。</p>
+  <p><b>AI連携</b>：右上の ✦ で AI 向け Markdown をコピー → AIに相談 → 返ってきた Markdown を「⋯ → AIの編集を取り込む」。位置・色・画像は ID で引き継がれます。</p>`,
+    buttons: [{ label: '閉じる', value: true, primary: true }] });
+}
+window.addEventListener('resize', () => { if (S.m) applyView(); });
+window.addEventListener('popstate', () => { const d = decodeURIComponent(location.hash.slice(1)); if (!d && S.m) showHome(false); else if (d && S.list.some(x => x.dir === d) && S.dir !== d) openMap(d); });
+
+/* ---------------- maps/README.md（AIと人間向けの書式説明） ---------------- */
+const README_MD = `# maps フォルダについて
+
+このフォルダは mindmap.html で作ったマインドマップの保存場所です。
+人間にも AI にも読みやすいよう、1つのマップ＝1つのフォルダにまとめています。
+
+\`\`\`
+maps/
+  README.md          … この説明
+  index.md           … マップの一覧（自動生成）
+  _trash/            … 削除したマップ（ここから手動で戻せます）
+  2026-10-10_テーマ/
+    map.md           … 【AIはこれを読む】内容を階層Markdownで書き出したもの（自動生成）
+    map.json         … 【正本】位置・色・画像サイズなどを含む全データ
+    images/          … ノードに貼った画像（ファイル名は ノードID-乱数.拡張子）
+\`\`\`
+
+## map.md の書式（mindmap-md/1）
+
+\`\`\`markdown
+---
+format: mindmap-md/1
+title: "旅行計画"
+updated: 2026-10-10T21:40:00+09:00
+---
+
+# 旅行計画 <!-- id:root -->
+
+- 行き先 <!-- id:n3k9a -->
+  - 京都 <!-- id:n8x2p -->
+    > 紅葉は11月下旬が見頃
+    ![京都](images/n8x2p-a1b.webp)
+- 予算 <!-- id:n0q7z -->
+
+## 独立ノード
+
+- あとで考える <!-- id:n5t1c -->
+
+## 関連
+
+- 京都 → 予算: 宿泊費が高い <!-- link:n8x2p>n0q7z -->
+\`\`\`
+
+- \`# 見出し\` が中心テーマ。箇条書きのインデント（半角スペース2つ）が階層です。
+- \`> \` で始まる行はそのノードのメモ。\`![..](images/..)\` はそのノードの画像。
+- \`<!-- id:... -->\` はノードID。AI が既存ノードを書き換えるときは **IDを残す** と、エディタ側で位置・色・画像が引き継がれます。新しいノードには ID を付けなくて構いません。
+- 「## 独立ノード」はどこにもつながっていないノード、「## 関連」は枝とは別の関連線（矢印）です。
+- ノード内の改行は \`<br>\` で表します。
+
+## AI に編集してもらうとき
+
+1. エディタ右上の ✦ ボタン（または map.md）で Markdown をコピーして AI に渡す
+2. 「この書式のまま、ID は残して、追加・修正したマップを返して」と頼む
+3. 返ってきた Markdown をエディタの「⋯ → AIの編集を取り込む」に貼り付ける
+
+map.md は保存のたびに map.json から作り直されます。map.md を直接編集しても map.json には反映されないので、取り込み機能を使ってください。
+
+## map.json の構造（mindmap/1）
+
+\`\`\`json
+{
+  "format": "mindmap/1", "id": "m…", "title": "…", "created": "…", "updated": "…",
+  "rootId": "root",
+  "nodes": [
+    { "id": "root", "parent": null, "text": "…", "note": "", "x": 0, "y": 0, "color": "" },
+    { "id": "n3k9a", "parent": "root", "text": "…", "note": "…", "x": 240, "y": -40, "color": "blue",
+      "image": { "file": "n3k9a-a1b.webp", "w": 220, "ar": 1.5 }, "collapsed": false }
+  ],
+  "links": [ { "id": "l…", "from": "n8x2p", "to": "n0q7z", "label": "…" } ]
+}
+\`\`\`
+
+- x, y はノード中心の座標（px）。兄弟の順番は y（上から下）で決まります。
+- parent が null でルート以外のノードは「独立ノード」です。
+`;
+
+const INITIAL_HASH = location.hash;
+boot().then(async () => {
+  if (S.fileMode) return;
+  if (INITIAL_HASH.startsWith('#import=')) {
+    history.replaceState(null, '', location.pathname + location.search);
+    try { const dir = await importShared(await unpackMap(INITIAL_HASH.slice(8))); if (dir) openMap(dir); } catch (e) { toast('共有データを読み込めませんでした', 4000); }
+    return;
+  }
+  if (INITIAL_HASH === '#open-file') { history.replaceState(null, '', location.pathname + location.search); return openFileDialog(); }
+  const d = decodeURIComponent(INITIAL_HASH.slice(1));
+  if (d && S.list.some(x => x.dir === d)) openMap(d);
+});
+</script>
+</body>
+</html>

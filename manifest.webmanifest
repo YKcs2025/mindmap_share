@@ -1,0 +1,17 @@
+{
+  "name": "マインドマップ",
+  "short_name": "マインドマップ",
+  "description": "スマホ・PCで使えるローカル保存のマインドマップ（AI向けMarkdown出力つき）",
+  "lang": "ja",
+  "start_url": "./mindmap.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f5f2",
+  "theme_color": "#f6f5f2",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
