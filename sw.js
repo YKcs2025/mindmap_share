@@ -1,6 +1,6 @@
 // オフラインでも開けるようにするための Service Worker
 // アプリ本体を更新したら VERSION を変えると、次回起動時に新しい版に入れ替わります。
-const VERSION = 'mindmap-v3';
+const VERSION = 'mindmap-v6';
 const APP = ['./', './index.html', './mindmap.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable.png', './icon-180.png'];
 
 self.addEventListener('install', e => {
